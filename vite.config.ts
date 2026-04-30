@@ -5,7 +5,7 @@ import {oxygen} from '@shopify/mini-oxygen/vite';
 import {vitePlugin as remix} from '@remix-run/dev';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
-export default defineConfig({
+export default defineConfig(({isSsrBuild}) => ({
   plugins: [
     hydrogen(),
     oxygen(),
@@ -37,26 +37,28 @@ export default defineConfig({
          *   react-vendor: ~45 KB (react + react-dom)
          *   hydrogen:    ~35 KB  (storefront helpers)
          */
-        manualChunks(id: string) {
-          // Headless UI — dialog, disclosure, transitions
-          if (id.includes('node_modules/@headlessui')) {
-            return 'headlessui';
-          }
-          // React core — almost never changes
-          if (
-            id.includes('node_modules/react/') ||
-            id.includes('node_modules/react-dom/')
-          ) {
-            return 'react-vendor';
-          }
-          // Hydrogen client helpers — cart, analytics, image
-          if (
-            id.includes('node_modules/@shopify/hydrogen-react') ||
-            id.includes('node_modules/@shopify/hydrogen')
-          ) {
-            return 'hydrogen';
-          }
-        },
+        manualChunks: isSsrBuild
+          ? undefined
+          : (id: string) => {
+              // Headless UI — dialog, disclosure, transitions
+              if (id.includes('node_modules/@headlessui')) {
+                return 'headlessui';
+              }
+              // React core — almost never changes
+              if (
+                id.includes('node_modules/react/') ||
+                id.includes('node_modules/react-dom/')
+              ) {
+                return 'react-vendor';
+              }
+              // Hydrogen client helpers — cart, analytics, image
+              if (
+                id.includes('node_modules/@shopify/hydrogen-react') ||
+                id.includes('node_modules/@shopify/hydrogen')
+              ) {
+                return 'hydrogen';
+              }
+            },
       },
     },
   },
@@ -69,4 +71,4 @@ export default defineConfig({
       include: ['use-sync-external-store/with-selector'],
     },
   },
-});
+}));
