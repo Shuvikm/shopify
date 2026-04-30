@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.shopify/
+.cache/
+*.log
+.env
+.DS_Store
+Thumbs.db

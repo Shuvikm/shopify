@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────
+   CSS Custom Properties / Design Tokens
+───────────────────────────────────────── */
+@layer base {
+  :root {
+    --color-brand-primary: #4f63f8;
+    --color-brand-dark:    #2e38cc;
+    --header-height:       4rem;
+    --drawer-width:        26rem;
+    --radius-sm:           0.375rem;
+    --radius-md:           0.625rem;
+    --radius-lg:           1rem;
+    --transition-fast:     150ms ease;
+    --transition-base:     250ms ease;
+    --transition-slow:     400ms ease;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-white text-neutral-900 font-sans text-base leading-relaxed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold leading-tight tracking-tight;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img, video {
+    max-width: 100%;
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
+
+/* ─────────────────────────────────────────
+   Component Utilities
+───────────────────────────────────────── */
+@layer components {
+
+  /* --- Buttons --- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2
+           px-5 py-2.5 rounded-md font-medium text-sm
+           transition-all duration-200 select-none
+           focus:outline-none focus-visible:ring-2
+           focus-visible:ring-offset-2 focus-visible:ring-brand-500
+           disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-500 text-white
+           hover:bg-brand-600 active:bg-brand-700;
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-neutral-900 border border-neutral-200
+           hover:border-brand-400 hover:text-brand-600;
+  }
+
+  .btn-ghost {
+    @apply btn text-neutral-600 hover:bg-neutral-100;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base rounded-lg;
+  }
+
+  /* --- Product Card ---
+     NOTE: `group` cannot be used with @apply.
+     Add the `group` class directly in JSX on the card element.
+  */
+  .product-card {
+    @apply relative rounded-xl overflow-hidden bg-white shadow-card
+           transition-shadow duration-300 hover:shadow-card-hover;
+  }
+
+  /* --- Form Controls --- */
+  .input {
+    @apply w-full px-4 py-2.5 rounded-md border border-neutral-200
+           text-sm bg-white text-neutral-900
+           placeholder:text-neutral-400
+           focus:outline-none focus:ring-2
+           focus:ring-brand-400 focus:border-transparent
+           transition-all duration-150;
+  }
+
+  /* --- Skeleton Loader --- */
+  .skeleton {
+    @apply bg-neutral-100 animate-skeleton rounded;
+  }
+
+  /* --- Badges --- */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-sale {
+    @apply badge bg-red-100 text-red-700;
+  }
+
+  .badge-new {
+    @apply badge bg-brand-100 text-brand-700;
+  }
+
+  .badge-sold-out {
+    @apply badge bg-neutral-100 text-neutral-500;
+  }
+
+  /* --- Divider --- */
+  .divider {
+    @apply border-t border-neutral-100 my-4;
+  }
+
+  /* --- Accessible Focus Ring (used on interactive elements) --- */
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2
+           focus-visible:ring-brand-500 focus-visible:ring-offset-2;
+  }
+}
+
+/* ─────────────────────────────────────────
+   Scrollbar Utilities
+───────────────────────────────────────── */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.neutral.200') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.neutral.200');
+    border-radius: 3px;
+  }
+}
+
+/* ─────────────────────────────────────────
+   Cart Drawer Transitions (Headless UI)
+───────────────────────────────────────── */
+.cart-drawer-overlay-enter {
+  opacity: 0;
+}
+.cart-drawer-overlay-enter-active {
+  opacity: 1;
+  transition: opacity var(--transition-base);
+}
+.cart-drawer-overlay-leave-active {
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.cart-drawer-panel-enter {
+  transform: translateX(100%);
+}
+.cart-drawer-panel-enter-active {
+  transform: translateX(0);
+  transition: transform var(--transition-base);
+}
+.cart-drawer-panel-leave-active {
+  transform: translateX(100%);
+  transition: transform var(--transition-base);
+}

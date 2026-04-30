@@ -1,0 +1,5 @@
+# robots.txt — HydroStore
+User-agent: *
+Allow: /
+
+Sitemap: https://your-store.myshopify.com/sitemap.xml
