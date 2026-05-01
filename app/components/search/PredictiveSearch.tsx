@@ -130,16 +130,54 @@ export function PredictiveSearch({onClose}: PredictiveSearchProps) {
                   />
                 )}
                 {!isLoading && !results && !query && (
-                  <div className="px-5 py-8 text-center text-sm text-neutral-400">
-                    Start typing to search…
+                  <div className="px-6 py-10 space-y-8">
+                    <div className="space-y-4">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">Popular Searches</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {['Snowboards', 'Bindings', 'Boots', 'Accessories'].map(term => (
+                          <button 
+                            key={term}
+                            onClick={() => setQuery(term)}
+                            className="px-4 py-2 bg-neutral-50 rounded-full text-sm font-bold text-neutral-700 hover:bg-brand-50 hover:text-brand-600 transition-colors"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">Featured Collections</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button onClick={() => {navigate('/collections/frontpage'); handleClose();}} className="group text-left p-4 bg-neutral-50 rounded-xl hover:bg-neutral-900 transition-all duration-300">
+                          <p className="text-sm font-bold group-hover:text-white">New Arrivals</p>
+                          <p className="text-[10px] text-neutral-400 group-hover:text-neutral-500 mt-1">Explore the latest gear</p>
+                        </button>
+                        <button onClick={() => {navigate('/collections/all'); handleClose();}} className="group text-left p-4 bg-neutral-50 rounded-xl hover:bg-neutral-900 transition-all duration-300">
+                          <p className="text-sm font-bold group-hover:text-white">Winter Collection</p>
+                          <p className="text-[10px] text-neutral-400 group-hover:text-neutral-500 mt-1">Essential winter tools</p>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
                 {!isLoading && query && results &&
                   results.products.length === 0 &&
                   results.collections.length === 0 && (
-                  <div className="px-5 py-8 text-center text-sm text-neutral-500">
-                    No results for <strong>"{query}"</strong>
+                  <div className="px-5 py-12 text-center space-y-3">
+                    <div className="text-4xl">🔍</div>
+                    <p className="text-sm text-neutral-500 font-medium">
+                      No results found for <span className="text-neutral-900 font-bold">"{query}"</span>
+                    </p>
+                    <button onClick={clear} className="text-xs text-brand-600 font-black uppercase tracking-widest hover:underline">Clear Search</button>
                   </div>
+                )}
+                {query && results && (results.products.length > 0 || results.collections.length > 0) && (
+                  <button 
+                    onClick={handleSubmit}
+                    className="w-full py-4 bg-neutral-50 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500 hover:bg-brand-500 hover:text-white transition-all border-t border-neutral-100"
+                  >
+                    View all results for "{query}"
+                  </button>
                 )}
               </div>
             </Dialog.Panel>
