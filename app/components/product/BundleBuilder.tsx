@@ -68,9 +68,12 @@ export function BundleBuilder({products}: {products: any[]}) {
                     style={{backgroundColor: isSelected ? '#f6c90e' : '#f3f4f6'}}
                   >
                     <img 
-                      src={product.featuredImage?.url} 
+                      src={product.featuredImage?.url || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800'} 
                       alt={product.title}
                       className="w-4/5 drop-shadow-[0_30px_20px_rgba(0,0,0,0.2)] rotate-[-24deg] -ml-4 transition-transform duration-500 group-hover:rotate-[-12deg]"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800';
+                      }}
                     />
                   </div>
                   <h3 className="text-xl font-black text-[#303841] mt-6 leading-tight">{product.title}</h3>

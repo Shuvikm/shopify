@@ -67,12 +67,17 @@ export function ProductCard({product, loading = false}: ProductCardProps) {
               width={product.featuredImage.width}
               height={product.featuredImage.height}
               loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://cdn.shopify.com/s/files/1/0551/4566/0472/products/Main_1.jpg';
+              }}
             />
           ) : (
-            <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
-              <span className="text-neutral-400 text-xs">No image</span>
-            </div>
+            <img
+              src="https://cdn.shopify.com/s/files/1/0551/4566/0472/products/Main_1.jpg"
+              alt={product.title}
+              className="w-full h-full object-cover"
+            />
           )}
 
           {/* Badges */}

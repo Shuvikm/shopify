@@ -4,13 +4,13 @@ export function Hero() {
   return (
     <section className="relative h-[80vh] min-h-[600px] overflow-hidden flex items-center">
       {/* Background Image with Parallax-like feel */}
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0 bg-neutral-900">
         <img
-          src="/assets/hero.png"
+          src="https://images.unsplash.com/photo-1519750783826-e2420f4d687f?auto=format&fit=crop&q=80&w=2000"
           alt="Premium Lifestyle"
-          className="w-full h-full object-cover object-center scale-105 animate-subtle-zoom"
+          className="w-full h-full object-cover object-center scale-105 animate-subtle-zoom opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
