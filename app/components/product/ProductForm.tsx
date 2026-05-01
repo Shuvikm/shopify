@@ -1,19 +1,16 @@
 /**
  * @file ProductForm.tsx
  * @description Variant selector + quantity picker + Add to Cart for the PDP.
- *
- * Architecture:
- * - Pure client component (uses `useFetcher` for AJAX cart add)
- * - Derives available/unavailable variants without full re-render
- * - Communicates selected variant back to parent via URL search params
- *   (keeps Remix's URL-as-state philosophy)
- * - `QuickAddButton` handles the actual cart mutation
  */
-import {useSearchParams, useNavigation} from '@remix-run/react';
+import {useSearchParams} from '@remix-run/react';
 import {useMemo, useState} from 'react';
 import type {ProductType, ProductVariantType} from '~/graphql/ProductQuery';
 import {getVariantUrl, formatMoney, isOnSale, cn} from '~/lib/utils';
 import {QuickAddButton} from './QuickAddButton';
+import {StockLevel} from './StockLevel';
+import {DeliveryEstimate} from './DeliveryEstimate';
+import {TrustBadges} from './TrustBadges';
+import {StickyAddToCart} from './StickyAddToCart';
 
 interface ProductFormProps {
   product: ProductType;
@@ -57,22 +54,48 @@ export function ProductForm({product}: ProductFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Price */}
-      <div className="flex items-baseline gap-3">
-        <span className="text-3xl font-bold text-neutral-900">
-          {selectedVariant
-            ? formatMoney(selectedVariant.price)
-            : formatMoney(product.priceRange.minVariantPrice)}
-        </span>
-        {onSale && selectedVariant?.compareAtPrice && (
-          <>
-            <span className="text-lg text-neutral-400 line-through">
-              {formatMoney(selectedVariant.compareAtPrice)}
-            </span>
-            <span className="badge-sale">Sale</span>
-          </>
-        )}
-        {soldOut && <span className="badge-sold-out">Sold Out</span>}
+      {/* Urgency Timer Feature */}
+      <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl animate-bounce">⚡</span>
+          <div>
+            <p className="text-xs font-black text-red-800 uppercase tracking-widest">Flash Sale Ending Soon!</p>
+            <p className="text-[10px] text-red-600 font-bold">Use code <span className="underline">HYDRO20</span> for extra 20% off</p>
+          </div>
+        </div>
+        <div className="flex gap-1.5">
+          {['02', '14', '55'].map((time, i) => (
+            <div key={i} className="bg-white border border-red-200 rounded-md px-1.5 py-1 min-w-[32px] text-center shadow-sm">
+              <span className="text-xs font-black text-red-700 block leading-none">{time}</span>
+              <span className="text-[7px] text-red-400 font-bold uppercase tracking-tighter">
+                {i === 0 ? 'Hrs' : i === 1 ? 'Min' : 'Sec'}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Price + Stock Level */}
+      <div className="space-y-2">
+        <div className="flex items-baseline gap-3">
+          <span className="text-3xl font-bold text-neutral-900">
+            {selectedVariant
+              ? formatMoney(selectedVariant.price)
+              : formatMoney(product.priceRange.minVariantPrice)}
+          </span>
+          {onSale && selectedVariant?.compareAtPrice && (
+            <>
+              <span className="text-lg text-neutral-400 line-through">
+                {formatMoney(selectedVariant.compareAtPrice)}
+              </span>
+              <span className="badge-sale">Sale</span>
+            </>
+          )}
+          {soldOut && <span className="badge-sold-out">Sold Out</span>}
+        </div>
+        
+        {/* Scarcity Feature */}
+        <StockLevel quantity={selectedVariant?.quantityAvailable} />
       </div>
 
       {/* Option Selectors */}
@@ -116,7 +139,6 @@ export function ProductForm({product}: ProductFormProps) {
                     }}
                   >
                     {value}
-                    {/* Diagonal "sold out" line */}
                     {!available && (
                       <span className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
                         <svg className="absolute inset-0 w-full h-full text-neutral-300" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -131,31 +153,26 @@ export function ProductForm({product}: ProductFormProps) {
           </fieldset>
         );
       })}
+      
+      {/* Delivery Estimate Feature */}
+      <DeliveryEstimate />
 
       {/* Quantity + Add to Cart */}
       <div className="flex items-center gap-3 pt-2">
-        {/* Quantity */}
         <div className="flex items-center border border-neutral-200 rounded-lg overflow-hidden">
           <button
             type="button"
-            aria-label="Decrease quantity"
-            id="pdp-qty-decrease"
             disabled={quantity <= 1}
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
             className="w-10 h-11 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 disabled:opacity-40 transition-colors"
           >
             −
           </button>
-          <span
-            className="w-10 text-center text-sm font-semibold text-neutral-900 select-none"
-            aria-live="polite"
-          >
+          <span className="w-10 text-center text-sm font-semibold text-neutral-900 select-none">
             {quantity}
           </span>
           <button
             type="button"
-            aria-label="Increase quantity"
-            id="pdp-qty-increase"
             disabled={quantity >= (selectedVariant?.quantityAvailable ?? 99)}
             onClick={() => setQuantity((q) => q + 1)}
             className="w-10 h-11 flex items-center justify-center text-neutral-500 hover:bg-neutral-50 disabled:opacity-40 transition-colors"
@@ -164,21 +181,23 @@ export function ProductForm({product}: ProductFormProps) {
           </button>
         </div>
 
-        {/* Add to Cart */}
         <QuickAddButton
           variantId={selectedVariant?.id ?? ''}
           quantity={quantity}
           disabled={soldOut || !selectedVariant}
-          className="flex-1 btn-primary btn-lg"
+          className="flex-1 btn-primary btn-lg !h-14 !text-lg shadow-xl shadow-brand-500/20 active:scale-95 transition-transform"
         >
-          {soldOut ? 'Sold Out' : 'Add to Cart'}
+          {soldOut ? 'Sold Out' : 'Add to Cart — Get it Fast'}
         </QuickAddButton>
       </div>
+
+      <StickyAddToCart product={product} />
+      <TrustBadges />
 
       {/* Description */}
       {product.descriptionHtml && (
         <div
-          className="prose prose-sm prose-neutral max-w-none border-t border-neutral-100 pt-6"
+          className="prose prose-sm prose-neutral max-w-none border-t border-neutral-100 pt-6 mt-6"
           dangerouslySetInnerHTML={{__html: product.descriptionHtml}}
         />
       )}

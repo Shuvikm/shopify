@@ -1,13 +1,6 @@
 /**
  * @file CartDrawer.tsx
  * @description Slide-in cart drawer using Headless UI Dialog.
- *
- * Features:
- * - Animated slide from the right with backdrop blur
- * - Lists all cart lines via CartLineItem
- * - Shows CartSummary with subtotal + checkout CTA
- * - Empty state with "Start Shopping" CTA
- * - Focus trapped inside the drawer (keyboard accessible)
  */
 import {Dialog, Transition} from '@headlessui/react';
 import {Link} from '@remix-run/react';
@@ -16,6 +9,7 @@ import {useCart} from '~/hooks/useCart';
 import {formatMoney} from '~/lib/utils';
 import {CartLineItem} from './CartLineItem';
 import {CartSummary} from './CartSummary';
+import {FreeShippingBar} from './FreeShippingBar';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -24,20 +18,16 @@ interface CartDrawerProps {
 
 export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
   const cartCtx = useCart();
-  // Hydrogen React's useCart returns lines as a connection object with a nodes array
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lines = (cartCtx as any);
   const totalQuantity = lines.totalQuantity as number | undefined;
   const checkoutUrl = lines.checkoutUrl as string | undefined;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cartLines: any[] = (lines.lines?.nodes as any[]) ?? [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cost = lines.cost as any;
+  const subtotal = cost?.subtotalAmount;
 
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
-        {/* Backdrop */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-200"
@@ -50,7 +40,6 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
         </Transition.Child>
 
-        {/* Drawer Panel */}
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -62,9 +51,8 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
         >
           <Dialog.Panel
             className="fixed inset-y-0 right-0 flex flex-col bg-white shadow-drawer"
-            style={{width: 'min(26rem, 100vw)'}}
+            style={{width: 'min(28rem, 100vw)'}}
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-5 h-16 border-b border-neutral-100 shrink-0">
               <Dialog.Title className="font-semibold text-lg text-neutral-900 flex items-center gap-2">
                 Cart
@@ -76,8 +64,6 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
               </Dialog.Title>
               <button
                 type="button"
-                id="cart-drawer-close"
-                aria-label="Close cart"
                 onClick={onClose}
                 className="btn-ghost w-8 h-8 p-0 rounded-full"
               >
@@ -85,21 +71,37 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
               </button>
             </div>
 
-            {/* Content */}
             {cartLines.length === 0 ? (
               <EmptyCart onClose={onClose} />
             ) : (
               <>
-                {/* Line Items */}
-                <ul className="flex-1 overflow-y-auto scrollbar-thin px-5 py-4 space-y-4" aria-label="Cart items">
+                <FreeShippingBar subtotal={subtotal} />
+
+                <ul className="flex-1 overflow-y-auto scrollbar-thin px-5 py-4 space-y-4">
                   {cartLines.map((line) => (
                     <li key={line.id}>
                       <CartLineItem line={line} />
                     </li>
                   ))}
+
+                  <div className="pt-8 mt-8 border-t border-neutral-50">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4">
+                      You might also like
+                    </p>
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="min-w-[140px] group cursor-pointer">
+                          <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden">
+                            <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-50 animate-pulse" />
+                          </div>
+                          <p className="text-[11px] font-bold text-neutral-800 line-clamp-1">Premium Essential</p>
+                          <p className="text-[10px] text-brand-600 font-black">$45.00</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </ul>
 
-                {/* Summary */}
                 <CartSummary cost={cost} checkoutUrl={checkoutUrl ?? '/cart'} />
               </>
             )}
@@ -109,8 +111,6 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
     </Transition>
   );
 }
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
 
 function EmptyCart({onClose}: {onClose: () => void}) {
   return (

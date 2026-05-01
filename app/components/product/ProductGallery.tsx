@@ -85,7 +85,7 @@ export function ProductGallery({images, selectedVariantImage}: ProductGalleryPro
 
       {/* Hero Image */}
       <div className="flex-1 min-w-0">
-        <div className="relative aspect-square rounded-2xl overflow-hidden bg-neutral-50">
+        <div className="relative aspect-square rounded-3xl overflow-hidden bg-neutral-50 group">
           <img
             key={activeImage?.url}
             src={activeImage?.url}
@@ -94,8 +94,10 @@ export function ProductGallery({images, selectedVariantImage}: ProductGalleryPro
             height={activeImage?.height ?? 800}
             loading="eager"
             fetchPriority="high"
-            className="w-full h-full object-cover transition-opacity duration-300"
+            className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110"
           />
+          {/* Subtle Overlay Shadow */}
+          <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_80px_rgba(0,0,0,0.02)]" />
         </div>
 
         {/* Mobile dot indicators */}

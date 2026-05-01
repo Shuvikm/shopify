@@ -1,13 +1,10 @@
 /**
  * @file routes/collections.$handle.tsx
- * @description Collection page with product grid and pagination.
- *
- * Uses cursor-based "Load More" pagination via useFetcher.
- * Server loader runs COLLECTION_QUERY — no client waterfall.
+ * @description Collection page with filter sidebar and sorting.
  */
 import {defer} from '@remix-run/server-runtime';
 import type {LoaderFunctionArgs} from '@remix-run/server-runtime';
-import {useLoaderData, useFetcher, useNavigation, type MetaFunction} from '@remix-run/react';
+import {useLoaderData, useFetcher, useNavigation, Link, type MetaFunction} from '@remix-run/react';
 import {useState} from 'react';
 import {COLLECTION_QUERY} from '~/graphql/CollectionQuery';
 import {ProductCard, ProductCardSkeleton} from '~/components/product/ProductCard';
@@ -15,7 +12,6 @@ import {ProductCard, ProductCardSkeleton} from '~/components/product/ProductCard
 const PRODUCTS_PER_PAGE = 12;
 
 export const meta: MetaFunction = ({data}) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const col = (data as any)?.collection;
   return [
     {title: col?.seo?.title ?? col?.title ?? 'Collection'},
@@ -28,6 +24,8 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   if (!handle) throw new Response('Not found', {status: 404});
 
   const url = new URL(request.url);
+  const sortKey = url.searchParams.get('sort') ?? 'COLLECTION_DEFAULT';
+  const reverse = url.searchParams.get('reverse') === 'true';
   const startCursor = url.searchParams.get('startCursor') ?? undefined;
   const endCursor = url.searchParams.get('endCursor') ?? undefined;
 
@@ -37,6 +35,8 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
       first: PRODUCTS_PER_PAGE,
       startCursor,
       endCursor,
+      sortKey,
+      reverse,
       language: context.storefront.i18n.language,
       country: context.storefront.i18n.country,
     },
@@ -46,6 +46,13 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 
   return defer({collection});
 }
+
+const SORT_OPTIONS = [
+  {label: 'Featured', value: 'COLLECTION_DEFAULT', reverse: false},
+  {label: 'Price: Low to High', value: 'PRICE', reverse: false},
+  {label: 'Price: High to Low', value: 'PRICE', reverse: true},
+  {label: 'Newest Arrivals', value: 'CREATED', reverse: true},
+];
 
 export default function CollectionPage() {
   const {collection} = useLoaderData<typeof loader>();
@@ -61,53 +68,79 @@ export default function CollectionPage() {
     fetcher.load(`/collections/${collection.handle}?endCursor=${pageInfo.endCursor}`);
   }
 
-  // Append newly loaded products
   if (fetcher.data && fetcher.state === 'idle') {
-    const newProducts = fetcher.data.collection?.products;
+    const newProducts = (fetcher.data as any).collection?.products;
     if (newProducts && newProducts.pageInfo.endCursor !== pageInfo.endCursor) {
-      setAllProducts((prev: typeof products.nodes) => [...prev, ...newProducts.nodes]);
+      setAllProducts((prev: any) => [...prev, ...newProducts.nodes]);
       setPageInfo(newProducts.pageInfo);
     }
   }
 
   return (
-    <div className="container mx-auto py-10 md:py-14">
-      {/* Header */}
-      <div className="mb-10 max-w-2xl">
-        <h1 className="text-4xl font-bold text-neutral-900 mb-3">{collection.title}</h1>
+    <div className="container mx-auto px-6 py-10 md:py-14">
+      <div className="mb-12">
+        <h1 className="text-5xl font-black text-neutral-900 tracking-tighter mb-4 leading-none">
+          {collection.title}
+        </h1>
         {collection.description && (
-          <p className="text-neutral-500 leading-relaxed">{collection.description}</p>
+          <p className="text-neutral-500 max-w-xl text-lg leading-relaxed">{collection.description}</p>
         )}
       </div>
 
-      {/* Product Grid */}
-      <div
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-        aria-label={`${collection.title} products`}
-      >
-        {isLoading
-          ? Array.from({length: PRODUCTS_PER_PAGE}).map((_, i) => (
-              <ProductCardSkeleton key={i} />
-            ))
-          : allProducts.map((product: (typeof products.nodes)[number]) => (
+      <div className="flex flex-col lg:flex-row gap-12">
+        <aside className="lg:w-64 shrink-0 space-y-10">
+          <div className="space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Sort By</h3>
+            <div className="flex flex-col gap-2">
+              {SORT_OPTIONS.map((opt) => (
+                <Link
+                  key={opt.label}
+                  to={`?sort=${opt.value}&reverse=${opt.reverse}`}
+                  className="text-sm font-bold text-neutral-600 hover:text-brand-500 transition-colors"
+                >
+                  {opt.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+          
+          <div className="space-y-4 border-t border-neutral-100 pt-8">
+            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Categories</h3>
+            <div className="flex flex-col gap-2">
+              <Link to="/collections/all" className="text-sm font-bold text-neutral-600 hover:text-brand-500">All Products</Link>
+              <Link to="/collections/frontpage" className="text-sm font-bold text-neutral-600 hover:text-brand-500">Featured</Link>
+              <Link to="/collections/new-arrivals" className="text-sm font-bold text-neutral-600 hover:text-brand-500">New Arrivals</Link>
+            </div>
+          </div>
+        </aside>
+
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-50">
+            <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
+              Showing {allProducts.length} Products
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+            {allProducts.map((product: any) => (
               <ProductCard key={product.id} product={product} />
             ))}
-      </div>
+          </div>
 
-      {/* Load More */}
-      {pageInfo.hasNextPage && (
-        <div className="flex justify-center mt-12">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={fetcher.state !== 'idle'}
-            className="btn btn-secondary btn-lg px-10"
-            id="collection-load-more-btn"
-          >
-            {fetcher.state !== 'idle' ? 'Loading…' : 'Load More'}
-          </button>
+          {pageInfo.hasNextPage && (
+            <div className="flex justify-center mt-16">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={fetcher.state !== 'idle'}
+                className="btn btn-secondary !h-14 px-12 !text-base"
+              >
+                {fetcher.state !== 'idle' ? 'Loading…' : 'Explore More'}
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

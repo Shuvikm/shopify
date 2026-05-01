@@ -7,3 +7,5 @@ export * from './cart';
 export * from './layout';
 export * from './product';
 export * from './search';
+export * from './Hero';
+export * from './FeaturedCategories';
