@@ -4,3 +4,4 @@
  */
 export {useCart} from './useCart';
 export {usePredictiveSearch} from './usePredictiveSearch';
+export {useWishlist} from './useWishlist';

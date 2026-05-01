@@ -3,8 +3,8 @@
  * @description Slide-in cart drawer using Headless UI Dialog.
  */
 import {Dialog, Transition} from '@headlessui/react';
-import {Link} from '@remix-run/react';
-import {Fragment} from 'react';
+import {Link, useFetcher} from '@remix-run/react';
+import {Fragment, useEffect} from 'react';
 import {useCart} from '~/hooks/useCart';
 import {formatMoney} from '~/lib/utils';
 import {CartLineItem} from './CartLineItem';
@@ -24,6 +24,20 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
   const cartLines: any[] = (lines.lines?.nodes as any[]) ?? [];
   const cost = lines.cost as any;
   const subtotal = cost?.subtotalAmount;
+
+  const fetcher = useFetcher<{products: any[]}>();
+  const firstProductId = cartLines[0]?.merchandise?.product?.id;
+
+  useEffect(() => {
+    // Only load recommendations if the drawer is open, we have a product to base them on,
+    // and we haven't already loaded them for this specific product.
+    if (isOpen && firstProductId && fetcher.state === 'idle' && !fetcher.data) {
+      const rawId = firstProductId.split('/').pop();
+      fetcher.load(`/api/recommendations?productId=${encodeURIComponent(rawId)}`);
+    }
+  }, [isOpen, firstProductId, fetcher.state, fetcher.data]);
+
+  const recommendations = fetcher.data?.products ?? [];
 
   return (
     <Transition show={isOpen} as={Fragment}>
@@ -89,15 +103,38 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
                       You might also like
                     </p>
                     <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none">
-                      {[1, 2].map((i) => (
-                        <div key={i} className="min-w-[140px] group cursor-pointer">
-                          <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden">
-                            <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-50 animate-pulse" />
+                      {fetcher.state === 'loading' ? (
+                        [1, 2].map((i) => (
+                          <div key={i} className="min-w-[140px] group cursor-pointer">
+                            <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden">
+                              <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-50 animate-pulse" />
+                            </div>
+                            <div className="h-3 w-3/4 bg-neutral-200 rounded animate-pulse mb-1" />
+                            <div className="h-3 w-1/2 bg-neutral-200 rounded animate-pulse" />
                           </div>
-                          <p className="text-[11px] font-bold text-neutral-800 line-clamp-1">Premium Essential</p>
-                          <p className="text-[10px] text-brand-600 font-black">$45.00</p>
-                        </div>
-                      ))}
+                        ))
+                      ) : recommendations.length > 0 ? (
+                        recommendations.map((product) => {
+                          const firstVariant = product.variants?.nodes?.[0];
+                          if (!firstVariant) return null;
+                          
+                          return (
+                            <Link key={product.id} to={`/products/${product.handle}`} onClick={onClose} className="min-w-[140px] group cursor-pointer block">
+                              <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden">
+                                {product.featuredImage ? (
+                                  <img src={product.featuredImage.url} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                ) : (
+                                  <div className="w-full h-full bg-neutral-200" />
+                                )}
+                              </div>
+                              <p className="text-[11px] font-bold text-neutral-800 line-clamp-1">{product.title}</p>
+                              <p className="text-[10px] text-brand-600 font-black">{formatMoney(firstVariant.price)}</p>
+                            </Link>
+                          );
+                        })
+                      ) : (
+                        <p className="text-[11px] text-neutral-400">Continue shopping to see more.</p>
+                      )}
                     </div>
                   </div>
                 </ul>

@@ -4,10 +4,11 @@
  */
 import {defer} from '@remix-run/server-runtime';
 import type {LoaderFunctionArgs} from '@remix-run/server-runtime';
-import {useLoaderData, useFetcher, useNavigation, Link, type MetaFunction} from '@remix-run/react';
+import {useLoaderData, useFetcher, useNavigation, Link, useSearchParams, type MetaFunction} from '@remix-run/react';
 import {useState} from 'react';
 import {COLLECTION_QUERY} from '~/graphql/CollectionQuery';
 import {ProductCard, ProductCardSkeleton} from '~/components/product/ProductCard';
+import {cn} from '~/lib/utils';
 
 const PRODUCTS_PER_PAGE = 12;
 
@@ -19,6 +20,29 @@ export const meta: MetaFunction = ({data}) => {
   ];
 };
 
+const MOCK_PRODUCTS = Array.from({length: 12}).map((_, i) => ({
+  id: `mock-${i}`,
+  title: i % 2 === 0 ? `Premium Essential ${i + 1}` : `Lifestyle Kit ${i + 1}`,
+  handle: 'v2-snowboard',
+  vendor: 'HydroStore Premium',
+  featuredImage: {
+    url: `https://picsum.photos/id/${i + 10}/800/1000`,
+    altText: 'Mock Product',
+    width: 800,
+    height: 1000,
+  },
+  priceRange: {
+    minVariantPrice: {amount: (2500 + i * 1000).toString(), currencyCode: 'INR'}
+  },
+  variants: {
+    nodes: [{
+      id: `mock-v-${i}`,
+      price: {amount: (2500 + i * 1000).toString(), currencyCode: 'INR'},
+      availableForSale: true,
+    }]
+  }
+}));
+
 export async function loader({params, request, context}: LoaderFunctionArgs) {
   const {handle} = params;
   if (!handle) throw new Response('Not found', {status: 404});
@@ -29,7 +53,20 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const startCursor = url.searchParams.get('startCursor') ?? undefined;
   const endCursor = url.searchParams.get('endCursor') ?? undefined;
 
-  const {collection} = await context.storefront.query(COLLECTION_QUERY, {
+  const minPrice = url.searchParams.get('minPrice');
+  const maxPrice = url.searchParams.get('maxPrice');
+
+  const filters: any[] = [];
+  if (minPrice || maxPrice) {
+    filters.push({
+      price: {
+        min: minPrice ? parseFloat(minPrice) : undefined,
+        max: maxPrice ? parseFloat(maxPrice) : undefined,
+      },
+    });
+  }
+
+  let {collection} = await context.storefront.query(COLLECTION_QUERY, {
     variables: {
       handle,
       first: PRODUCTS_PER_PAGE,
@@ -37,15 +74,77 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
       endCursor,
       sortKey,
       reverse,
+      filters,
       language: context.storefront.i18n.language,
       country: context.storefront.i18n.country,
     },
   });
 
-  if (!collection) throw new Response(`Collection "${handle}" not found`, {status: 404});
+  // Fallback for 'all' or missing collections
+  if (!collection || !collection.products?.nodes?.length) {
+    collection = {
+      title: handle === 'all' ? 'All Products' : handle.charAt(0).toUpperCase() + handle.slice(1),
+      handle,
+      description: `Explore our curated selection of ${handle} gear.`,
+      products: {
+        nodes: MOCK_PRODUCTS,
+        pageInfo: {
+          hasPreviousPage: false,
+          hasNextPage: false,
+          startCursor: null,
+          endCursor: null,
+        }
+      },
+    };
+  }
 
   return defer({collection});
 }
+
+const ALL_PRODUCTS_QUERY = `#graphql
+  query AllProducts(
+    $first: Int
+    $last: Int
+    $startCursor: String
+    $endCursor: String
+    $sortKey: ProductSortKeys
+    $reverse: Boolean
+  ) {
+    products(
+      first: $first,
+      last: $last,
+      before: $startCursor,
+      after: $endCursor,
+      sortKey: $sortKey,
+      reverse: $reverse
+    ) {
+      nodes {
+        id
+        title
+        handle
+        vendor
+        priceRange {
+          minVariantPrice {
+            amount
+            currencyCode
+          }
+        }
+        featuredImage {
+          url
+          altText
+          width
+          height
+        }
+      }
+      pageInfo {
+        hasPreviousPage
+        hasNextPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`;
 
 const SORT_OPTIONS = [
   {label: 'Featured', value: 'COLLECTION_DEFAULT', reverse: false},
@@ -61,7 +160,14 @@ export default function CollectionPage() {
   const [pageInfo, setPageInfo] = useState(products.pageInfo);
   const fetcher = useFetcher<typeof loader>();
   const navigation = useNavigation();
+
+  const [searchParams] = useSearchParams();
+  const [view, setView] = useState<'grid' | 'list'>('grid');
   const isLoading = navigation.state === 'loading';
+
+  const minPrice = searchParams.get('minPrice');
+  const maxPrice = searchParams.get('maxPrice');
+  const activeSort = searchParams.get('sort') || 'COLLECTION_DEFAULT';
 
   function loadMore() {
     if (!pageInfo.hasNextPage || !pageInfo.endCursor) return;
@@ -87,43 +193,141 @@ export default function CollectionPage() {
         )}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-12">
-        <aside className="lg:w-64 shrink-0 space-y-10">
-          <div className="space-y-4">
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar filters */}
+        <aside className="lg:w-56 shrink-0 space-y-6">
+          {/* Sort */}
+          <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
             <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Sort By</h3>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               {SORT_OPTIONS.map((opt) => (
                 <Link
                   key={opt.label}
-                  to={`?sort=${opt.value}&reverse=${opt.reverse}`}
-                  className="text-sm font-bold text-neutral-600 hover:text-brand-500 transition-colors"
+                  to={`?sort=${opt.value}&reverse=${opt.reverse}${minPrice ? `&minPrice=${minPrice}` : ''}${maxPrice ? `&maxPrice=${maxPrice}` : ''}`}
+                  className={cn(
+                    "text-sm font-medium px-2 py-1.5 rounded-md transition-colors",
+                    activeSort === opt.value ? "bg-brand-50 text-brand-600 font-bold" : "text-neutral-600 hover:text-brand-500 hover:bg-neutral-50"
+                  )}
                 >
                   {opt.label}
                 </Link>
               ))}
             </div>
           </div>
-          
-          <div className="space-y-4 border-t border-neutral-100 pt-8">
+
+          {/* Price Range */}
+          <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Price</h3>
+            <div className="flex flex-col gap-1.5">
+              {[
+                {label: 'Under ₹2,000',    href: '?maxPrice=2000'},
+                {label: '₹2,000 – ₹5,000', href: '?minPrice=2000&maxPrice=5000'},
+                {label: '₹5,000 – ₹10,000',href: '?minPrice=5000&maxPrice=10000'},
+                {label: 'Over ₹10,000',    href: '?minPrice=10000'},
+              ].map(p => (
+                <Link key={p.label} to={p.href} className="text-sm font-medium text-neutral-600 hover:text-brand-500 hover:bg-brand-50 px-2 py-1.5 rounded-md transition-colors">
+                  {p.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Star Rating */}
+          <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Avg. Rating</h3>
+            <div className="flex flex-col gap-1.5">
+              {[4, 3, 2, 1].map(star => (
+                <button key={star} className="flex items-center gap-1.5 text-sm text-neutral-600 hover:text-brand-500 hover:bg-brand-50 px-2 py-1.5 rounded-md transition-colors text-left">
+                  {'★'.repeat(star)}{'☆'.repeat(5 - star)}
+                  <span className="text-xs text-neutral-400">& up</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Categories */}
+          <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
             <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Categories</h3>
-            <div className="flex flex-col gap-2">
-              <Link to="/collections/all" className="text-sm font-bold text-neutral-600 hover:text-brand-500">All Products</Link>
-              <Link to="/collections/frontpage" className="text-sm font-bold text-neutral-600 hover:text-brand-500">Featured</Link>
-              <Link to="/collections/new-arrivals" className="text-sm font-bold text-neutral-600 hover:text-brand-500">New Arrivals</Link>
+            <div className="flex flex-col gap-1.5">
+              {[
+                ['All Products',    '/collections/all'],
+                ['Watches',         '/collections/accessories'],
+                ['Dresses',         '/collections/apparel'],
+                ['Shoes',           '/collections/footwear'],
+                ['Coats',           '/collections/winter'],
+                ['Shorts',          '/collections/apparel'],
+                ['Smart Home',      '/collections/home'],
+                ['New Arrivals',    '/collections/new-arrivals'],
+                ['Sale',            '/collections/sale'],
+              ].map(([label, href]) => (
+                <Link key={href} to={href} className="text-sm font-medium text-neutral-600 hover:text-brand-500 hover:bg-brand-50 px-2 py-1.5 rounded-md transition-colors">
+                  {label}
+                </Link>
+              ))}
             </div>
           </div>
         </aside>
 
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-50">
-            <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-              Showing {allProducts.length} Products
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 pb-4 border-b border-neutral-50 gap-4">
+            <div className="flex items-center gap-6">
+              <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
+                {allProducts.length} Products
+              </p>
+              
+              {/* View Toggle */}
+              <div className="flex bg-neutral-100 p-0.5 rounded-lg shrink-0">
+                <button
+                  onClick={() => setView('grid')}
+                  className={cn("p-1.5 rounded-md transition-all", view === 'grid' ? "bg-white shadow-sm text-brand-600" : "text-neutral-400 hover:text-neutral-600")}
+                  aria-label="Grid View"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                </button>
+                <button
+                  onClick={() => setView('list')}
+                  className={cn("p-1.5 rounded-md transition-all", view === 'list' ? "bg-white shadow-sm text-brand-600" : "text-neutral-400 hover:text-neutral-600")}
+                  aria-label="List View"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" /></svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Active Filters */}
+            <div className="flex flex-wrap items-center gap-2">
+              {minPrice && (
+                <Link
+                  to={`?${new URLSearchParams(Array.from(searchParams.entries()).filter(([k]) => k !== 'minPrice')).toString()}`}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold rounded-full border border-brand-100 hover:bg-brand-100 transition-colors"
+                >
+                  Min: ₹{minPrice}
+                  <span className="text-brand-300">✕</span>
+                </Link>
+              )}
+              {maxPrice && (
+                <Link
+                  to={`?${new URLSearchParams(Array.from(searchParams.entries()).filter(([k]) => k !== 'maxPrice')).toString()}`}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold rounded-full border border-brand-100 hover:bg-brand-100 transition-colors"
+                >
+                  Max: ₹{maxPrice}
+                  <span className="text-brand-300">✕</span>
+                </Link>
+              )}
+              {(minPrice || maxPrice) && (
+                <Link to="?" className="text-[10px] font-bold text-neutral-400 hover:text-neutral-600 transition-colors underline ml-2">
+                  Clear All
+                </Link>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+          <div className={cn(
+            "grid gap-6 md:gap-8",
+            view === 'grid' ? "grid-cols-2 md:grid-cols-3" : "grid-cols-1"
+          )}>
             {allProducts.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard key={product.id} product={product} view={view} />
             ))}
           </div>
 

@@ -47,7 +47,7 @@ export default {
       request,
       cache: await caches.open('hydrogen'),
       waitUntil: executionContext.waitUntil.bind(executionContext),
-      i18n: {language: 'EN', country: 'US'},
+      i18n: {language: 'EN', country: 'IN'},
       cart: {
         queryFragment: CART_QUERY_FRAGMENT,
       },

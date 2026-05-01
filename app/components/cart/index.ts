@@ -6,3 +6,4 @@
 export {CartDrawer} from './CartDrawer';
 export {CartLineItem} from './CartLineItem';
 export {CartSummary} from './CartSummary';
+export {FreeShippingBar} from './FreeShippingBar';

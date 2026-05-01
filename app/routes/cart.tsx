@@ -26,9 +26,13 @@ export async function action({request, context}: ActionFunctionArgs) {
 
   switch (cartAction) {
     case 'ADD_TO_CART': {
-      const variantId = formData.get('variantId') as string;
-      const quantity = Number(formData.get('quantity') ?? 1);
-      await addToCart(cart as unknown, [{merchandiseId: variantId, quantity}]);
+      const variantIds = formData.getAll('variantId') as string[];
+      const quantities = formData.getAll('quantity') as string[];
+      const lines = variantIds.map((id, index) => ({
+        merchandiseId: id,
+        quantity: quantities[index] ? Number(quantities[index]) : 1
+      }));
+      await addToCart(cart as unknown, lines);
       return json({ok: true});
     }
 

@@ -16,6 +16,7 @@ const FOOTER_LINKS = [
   {
     heading: 'Help',
     links: [
+      {label: 'Track My Order', href: '/track'},
       {label: 'Contact Us', href: '/contact'},
       {label: 'Shipping & Returns', href: '/pages/shipping-returns'},
       {label: 'Privacy Policy', href: '/pages/privacy-policy'},

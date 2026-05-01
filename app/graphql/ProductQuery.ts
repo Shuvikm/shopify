@@ -117,6 +117,20 @@ export const PRODUCT_FRAGMENT = `#graphql
         }
       }
     }
+    # Metaobject — Product Reviews (namespace: custom, key: product_reviews)
+    reviewsMetafield: metafield(namespace: "custom", key: "product_reviews") {
+      reference {
+        ... on Metaobject {
+          id
+          type
+          fields {
+            key
+            value
+            type
+          }
+        }
+      }
+    }
     selectedVariant: variantBySelectedOptions(selectedOptions: $selectedOptions, ignoreUnknownOptions: true, caseInsensitiveMatch: true) {
       ...ProductVariant
     }
@@ -153,6 +167,7 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
     title
     handle
     vendor
+    description
     productType
     priceRange {
       minVariantPrice {
@@ -193,6 +208,21 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
       }
     }
   }
+` as const;
+
+export const NODES_QUERY = `#graphql
+  query Nodes(
+    $ids: [ID!]!
+    $country: CountryCode
+    $language: LanguageCode
+  ) @inContext(country: $country, language: $language) {
+    nodes(ids: $ids) {
+      ... on Product {
+        ...ProductCard
+      }
+    }
+  }
+  ${PRODUCT_CARD_FRAGMENT}
 ` as const;
 
 // ─── TypeScript Interfaces ────────────────────────────────────────────────────
@@ -249,6 +279,13 @@ export interface ProductType {
     }>;
   };
   metafield: {
+    reference: {
+      id: string;
+      type: string;
+      fields: MetaobjectField[];
+    } | null;
+  } | null;
+  reviewsMetafield: {
     reference: {
       id: string;
       type: string;

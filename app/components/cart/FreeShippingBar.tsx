@@ -5,7 +5,7 @@
 import {formatMoney} from '~/lib/utils';
 
 export function FreeShippingBar({subtotal}: {subtotal: any}) {
-  const threshold = 100; // $100 for free shipping
+  const threshold = 5000; // ₹5000 for free shipping
   const amount = parseFloat(subtotal?.amount ?? '0');
   const remaining = Math.max(0, threshold - amount);
   const progress = Math.min(100, (amount / threshold) * 100);
@@ -16,7 +16,7 @@ export function FreeShippingBar({subtotal}: {subtotal: any}) {
         <p className="text-xs font-bold text-neutral-800 uppercase tracking-widest">
           {remaining > 0 ? (
             <>
-              You're <span className="text-brand-600">{formatMoney({amount: remaining.toString(), currencyCode: subtotal?.currencyCode ?? 'USD'})}</span> away from <span className="text-brand-600 underline">Free Shipping</span>!
+              You're <span className="text-brand-600">{formatMoney({amount: remaining.toString(), currencyCode: subtotal?.currencyCode ?? 'INR'})}</span> away from <span className="text-brand-600 underline">Free Shipping</span>!
             </>
           ) : (
             <span className="text-green-600 flex items-center gap-1">

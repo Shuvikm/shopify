@@ -11,7 +11,6 @@ import {CartProvider} from '@shopify/hydrogen-react';
 import appStyles from '~/styles/app.css?url';
 import {Header, Footer} from '~/components/layout';
 import {CartDrawer} from '~/components/cart';
-import {RecentPurchasePopup} from '~/components/product/RecentPurchasePopup';
 import {useCart} from '~/hooks/useCart';
 
 export const links: LinksFunction = () => [
@@ -82,38 +81,67 @@ function AppLayout() {
       <Footer />
       {/* Global Components */}
       <CartDrawer isOpen={isOpen} onClose={closeCart} />
-      <RecentPurchasePopup />
     </div>
   );
 }
 
-export function CatchBoundary() {
+import {isRouteErrorResponse, useRouteError} from '@remix-run/react';
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const nonce = useNonce();
+
+  if (isRouteErrorResponse(error)) {
+    return (
+      <html lang="en">
+        <head>
+          <title>{error.status === 404 ? '404 - Not Found' : 'Error'}</title>
+          <Meta />
+          <Links />
+        </head>
+        <body className="flex items-center justify-center min-h-screen bg-neutral-50 px-6">
+          <div className="text-center max-w-md">
+            <h1 className="text-8xl font-black text-neutral-200 mb-4">{error.status}</h1>
+            <h2 className="text-2xl font-bold text-neutral-800 mb-4">
+              {error.status === 404 ? 'Page not found' : 'Something went wrong'}
+            </h2>
+            <p className="text-neutral-500 mb-8">
+              {error.status === 404 
+                ? "The page you're looking for doesn't exist or has been moved."
+                : (error.data?.message ?? 'An unexpected error occurred.')}
+            </p>
+            <a href="/" className="btn-primary inline-flex items-center gap-2">
+              Back to Home
+            </a>
+          </div>
+          <Scripts nonce={nonce} />
+        </body>
+      </html>
+    );
+  }
+
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
   return (
     <html lang="en">
-      <head><title>404 – Page Not Found</title><Meta /><Links /></head>
-      <body className="flex items-center justify-center min-h-screen bg-neutral-50">
-        <div className="text-center">
-          <h1 className="text-6xl font-bold text-neutral-200 mb-4">404</h1>
-          <p className="text-xl text-neutral-500 mb-8">Page not found.</p>
+      <head>
+        <title>Error - Something went wrong</title>
+        <Meta />
+        <Links />
+      </head>
+      <body className="flex items-center justify-center min-h-screen bg-neutral-50 px-6">
+        <div className="text-center max-w-lg">
+          <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">
+            ⚠️
+          </div>
+          <h1 className="text-4xl font-bold text-neutral-800 mb-4">Something went wrong</h1>
+          <p className="text-neutral-500 mb-8">
+            We encountered an error while rendering this page. <br />
+            <span className="text-xs font-mono bg-neutral-100 p-1 rounded mt-2 inline-block">{errorMessage}</span>
+          </p>
           <a href="/" className="btn-primary">Back to Home</a>
         </div>
-        <Scripts />
-      </body>
-    </html>
-  );
-}
-
-export function ErrorBoundary({error}: {error: Error}) {
-  return (
-    <html lang="en">
-      <head><title>Error – Something went wrong</title><Meta /><Links /></head>
-      <body className="flex items-center justify-center min-h-screen bg-neutral-50">
-        <div className="text-center max-w-lg">
-          <h1 className="text-4xl font-bold text-neutral-800 mb-4">Something went wrong</h1>
-          <p className="text-neutral-500 mb-2">{error?.message}</p>
-          <a href="/" className="btn-primary mt-6 inline-block">Back to Home</a>
-        </div>
-        <Scripts />
+        <Scripts nonce={nonce} />
       </body>
     </html>
   );

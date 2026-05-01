@@ -6,8 +6,6 @@ import {useFetcher} from '@remix-run/react';
 import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {useCart} from '~/hooks/useCart';
 import {cn} from '~/lib/utils';
-import gsap from 'gsap';
-
 interface QuickAddButtonProps {
   variantId: string;
   quantity?: number;
@@ -30,48 +28,14 @@ export function QuickAddButton({
 
   const isLoading = fetcher.state === 'submitting' || fetcher.state === 'loading';
 
+  // Clean, CSS-based loading state logic
   useEffect(() => {
-    if (isLoading && buttonRef.current) {
-      // Shrink button to circle on submit
-      gsap.to(buttonRef.current, {
-        width: 56,
-        duration: 0.4,
-        ease: 'power4.out',
-      });
-    }
-  }, [isLoading]);
-
-  useEffect(() => {
-    if (fetcher.state === 'idle' && fetcher.data?.ok && buttonRef.current) {
+    if (fetcher.state === 'idle' && fetcher.data?.ok) {
       setInCart(true);
-      
-      // Keep it shrunk and show success
-      const tl = gsap.timeline();
-      tl.to(buttonRef.current, {
-        backgroundColor: '#f6c90e', // Yellow like the template
-        color: '#303841',
-        duration: 0.2,
-      })
-      .to(buttonRef.current, {
-        scale: 1.1,
-        duration: 0.1,
-        yoyo: true,
-        repeat: 1,
-      });
-
-      // Auto open cart and reset button after 1s
       const timer = setTimeout(() => {
         openCart();
-        gsap.to(buttonRef.current, {
-          width: '100%',
-          backgroundColor: '', // Restore original
-          color: '',
-          duration: 0.4,
-          ease: 'power2.inOut',
-          onComplete: () => setInCart(false)
-        });
-      }, 1000);
-
+        setInCart(false);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [fetcher.state, fetcher.data, openCart]);
@@ -88,8 +52,8 @@ export function QuickAddButton({
           type="submit"
           disabled={disabled || isLoading || inCart || !variantId}
           className={cn(
-            'btn btn-primary relative overflow-hidden transition-colors',
-            (isLoading || inCart) && 'rounded-full px-0',
+            'btn btn-primary w-full relative overflow-hidden transition-all',
+            inCart && 'bg-green-500 hover:bg-green-600',
             className,
           )}
         >

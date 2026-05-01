@@ -12,6 +12,8 @@ import {DeliveryEstimate} from './DeliveryEstimate';
 import {TrustBadges} from './TrustBadges';
 import {StickyAddToCart} from './StickyAddToCart';
 
+import {UrgencyTimer} from './UrgencyTimer';
+
 interface ProductFormProps {
   product: ProductType;
 }
@@ -55,25 +57,7 @@ export function ProductForm({product}: ProductFormProps) {
   return (
     <div className="space-y-6">
       {/* Urgency Timer Feature */}
-      <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl animate-bounce">⚡</span>
-          <div>
-            <p className="text-xs font-black text-red-800 uppercase tracking-widest">Flash Sale Ending Soon!</p>
-            <p className="text-[10px] text-red-600 font-bold">Use code <span className="underline">HYDRO20</span> for extra 20% off</p>
-          </div>
-        </div>
-        <div className="flex gap-1.5">
-          {['02', '14', '55'].map((time, i) => (
-            <div key={i} className="bg-white border border-red-200 rounded-md px-1.5 py-1 min-w-[32px] text-center shadow-sm">
-              <span className="text-xs font-black text-red-700 block leading-none">{time}</span>
-              <span className="text-[7px] text-red-400 font-bold uppercase tracking-tighter">
-                {i === 0 ? 'Hrs' : i === 1 ? 'Min' : 'Sec'}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+      <UrgencyTimer />
 
       {/* Price + Stock Level */}
       <div className="space-y-2">
@@ -95,7 +79,7 @@ export function ProductForm({product}: ProductFormProps) {
         </div>
         
         {/* Scarcity Feature */}
-        <StockLevel quantity={selectedVariant?.quantityAvailable} />
+        <StockLevel quantity={selectedVariant?.quantityAvailable ?? undefined} />
       </div>
 
       {/* Option Selectors */}

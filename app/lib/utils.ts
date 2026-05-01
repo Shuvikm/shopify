@@ -26,7 +26,7 @@ export function formatMoney(money: {
   amount: string;
   currencyCode: string;
 }): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: money.currencyCode,
     minimumFractionDigits: 2,

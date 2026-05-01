@@ -2,11 +2,34 @@
  * @file useCart.ts
  * @description Client-side cart state hook.
  *
- * Wraps Hydrogen React's `useCart` with a drawer open/close toggle.
+ * Wraps Hydrogen React's `useCart` with a global drawer open/close toggle.
  * Import this in components — never import `cart.server.ts` on the client.
  */
 import {useCart as useHydrogenCart} from '@shopify/hydrogen-react';
-import {useCallback, useState} from 'react';
+import {useCallback, useSyncExternalStore} from 'react';
+
+// Global state for cart drawer visibility
+let isOpenGlobal = false;
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot() {
+  return isOpenGlobal;
+}
+
+function setIsOpen(value: boolean | ((prev: boolean) => boolean)) {
+  const nextValue = typeof value === 'function' ? value(isOpenGlobal) : value;
+  if (isOpenGlobal !== nextValue) {
+    isOpenGlobal = nextValue;
+    listeners.forEach((listener) => listener());
+  }
+}
 
 interface UseCartReturn extends ReturnType<typeof useHydrogenCart> {
   /** Whether the cart drawer is currently visible. */
@@ -20,14 +43,14 @@ interface UseCartReturn extends ReturnType<typeof useHydrogenCart> {
 }
 
 /**
- * Extends Hydrogen's `useCart` with drawer visibility state.
+ * Extends Hydrogen's `useCart` with global drawer visibility state.
  *
  * @example
  * const { totalQuantity, isOpen, openCart } = useCart();
  */
 export function useCart(): UseCartReturn {
   const cart = useHydrogenCart();
-  const [isOpen, setIsOpen] = useState(false);
+  const isOpen = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);

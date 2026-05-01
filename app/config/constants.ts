@@ -21,8 +21,8 @@ export const CART_ACTIONS = {
 /** Default locale */
 export const DEFAULT_LOCALE = {
   language: 'EN',
-  country: 'US',
-  currency: 'USD',
+  country: 'IN',
+  currency: 'INR',
 } as const;
 
 /** Navigation links — shared between Header and MobileMenu */
@@ -34,7 +34,7 @@ export const NAV_ITEMS = [
 
 /** Trust badge data — used on homepage */
 export const TRUST_BADGES = [
-  {icon: '🚀', label: 'Free Shipping Over $50'},
+  {icon: '🚀', label: 'Free Shipping Over ₹5,000'},
   {icon: '♻️', label: 'Sustainable Packaging'},
   {icon: '🔒', label: 'Secure Checkout'},
   {icon: '↩️', label: '30-Day Returns'},
@@ -44,4 +44,4 @@ export const TRUST_BADGES = [
 export const SEARCH_DEBOUNCE_MS = 300;
 
 /** Minimum free shipping threshold (in store currency) */
-export const FREE_SHIPPING_THRESHOLD = 50;
+export const FREE_SHIPPING_THRESHOLD = 5000;

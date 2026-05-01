@@ -123,7 +123,7 @@ export default function ProductPage() {
       </div>
 
       {/* Social Proof — Reviews */}
-      <ProductReviews />
+      <ProductReviews metaobjectFields={product.reviewsMetafield?.reference?.fields} />
 
       {/* Cross-sell — People also bought */}
       <div className="border-t border-neutral-100 py-16 md:py-24">

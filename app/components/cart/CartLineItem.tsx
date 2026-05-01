@@ -11,6 +11,7 @@
 import {useFetcher} from '@remix-run/react';
 import {formatMoney} from '~/lib/utils';
 import type {CartLine} from '~/graphql/CartMutations';
+import {useWishlist} from '~/hooks/useWishlist';
 
 interface CartLineItemProps {
   line: CartLine;
@@ -21,8 +22,22 @@ export function CartLineItem({line}: CartLineItemProps) {
   const removeFetcher = useFetcher();
 
   const {merchandise, quantity, cost} = line;
+  const {isWishlisted, toggle} = useWishlist();
   const isUpdating = updateFetcher.state !== 'idle';
   const isRemoving = removeFetcher.state !== 'idle';
+
+  const productId = merchandise.product.id;
+
+  function handleSaveForLater() {
+    if (!isWishlisted(productId)) {
+      toggle(productId);
+    }
+    // Remove from cart
+    const formData = new FormData();
+    formData.append('cartAction', 'REMOVE_CART_LINE');
+    formData.append('lineId', line.id);
+    removeFetcher.submit(formData, {method: 'POST', action: '/cart'});
+  }
 
   // Optimistic quantity while fetcher is in flight
   const optimisticQuantity =
@@ -62,6 +77,13 @@ export function CartLineItem({line}: CartLineItemProps) {
             .map((o) => o.value)
             .join(' / ')}
         </p>
+
+        <button
+          onClick={handleSaveForLater}
+          className="text-[10px] font-bold text-brand-600 hover:text-brand-700 underline uppercase tracking-tighter"
+        >
+          {isWishlisted(productId) ? 'Already in Wishlist' : 'Save for Later'}
+        </button>
 
         {/* Price + controls */}
         <div className="flex items-center justify-between pt-1">
