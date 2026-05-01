@@ -20,28 +20,7 @@ export const meta: MetaFunction = ({data}) => {
   ];
 };
 
-const MOCK_PRODUCTS = Array.from({length: 12}).map((_, i) => ({
-  id: `mock-${i}`,
-  title: i % 2 === 0 ? `Premium Essential ${i + 1}` : `Lifestyle Kit ${i + 1}`,
-  handle: 'v2-snowboard',
-  vendor: 'HydroStore Premium',
-  featuredImage: {
-    url: `https://picsum.photos/id/${i + 10}/800/1000`,
-    altText: 'Mock Product',
-    width: 800,
-    height: 1000,
-  },
-  priceRange: {
-    minVariantPrice: {amount: (2500 + i * 1000).toString(), currencyCode: 'INR'}
-  },
-  variants: {
-    nodes: [{
-      id: `mock-v-${i}`,
-      price: {amount: (2500 + i * 1000).toString(), currencyCode: 'INR'},
-      availableForSale: true,
-    }]
-  }
-}));
+import {MOCK_PRODUCTS} from '~/config/mock';
 
 export async function loader({params, request, context}: LoaderFunctionArgs) {
   const {handle} = params;
@@ -57,6 +36,8 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
   const maxPrice = url.searchParams.get('maxPrice');
 
   const filters: any[] = [];
+  
+  // Price filters
   if (minPrice || maxPrice) {
     filters.push({
       price: {
@@ -65,6 +46,16 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
       },
     });
   }
+
+  // Dynamic filters from URL
+  const dynamicFilters = url.searchParams.getAll('filter');
+  dynamicFilters.forEach(f => {
+    try {
+      filters.push(JSON.parse(f));
+    } catch (e) {
+      console.error('Failed to parse filter:', f);
+    }
+  });
 
   let {collection} = await context.storefront.query(COLLECTION_QUERY, {
     variables: {
@@ -232,40 +223,50 @@ export default function CollectionPage() {
             </div>
           </div>
 
-          {/* Star Rating */}
-          <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Avg. Rating</h3>
-            <div className="flex flex-col gap-1.5">
-              {[4, 3, 2, 1].map(star => (
-                <button key={star} className="flex items-center gap-1.5 text-sm text-neutral-600 hover:text-brand-500 hover:bg-brand-50 px-2 py-1.5 rounded-md transition-colors text-left">
-                  {'★'.repeat(star)}{'☆'.repeat(5 - star)}
-                  <span className="text-xs text-neutral-400">& up</span>
-                </button>
-              ))}
+          {/* Dynamic Filters from API */}
+          {products.filters.map((filter: any) => (
+            <div key={filter.id} className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">{filter.label}</h3>
+              <div className="flex flex-col gap-1.5">
+                {filter.values.map((val: any) => {
+                  const isActive = searchParams.toString().includes(encodeURIComponent(val.input));
+                  return (
+                    <Link
+                      key={val.id}
+                      to={isActive ? '?' : `?filter=${encodeURIComponent(val.input)}`}
+                      className={cn(
+                        "text-sm font-medium px-2 py-1.5 rounded-md transition-colors flex justify-between items-center",
+                        isActive ? "bg-brand-50 text-brand-600 font-bold" : "text-neutral-600 hover:text-brand-500 hover:bg-neutral-50"
+                      )}
+                    >
+                      <span>{val.label}</span>
+                      <span className="text-[10px] text-neutral-300">({val.count})</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ))}
 
-          {/* Categories */}
-          <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Categories</h3>
-            <div className="flex flex-col gap-1.5">
-              {[
-                ['All Products',    '/collections/all'],
-                ['Watches',         '/collections/accessories'],
-                ['Dresses',         '/collections/apparel'],
-                ['Shoes',           '/collections/footwear'],
-                ['Coats',           '/collections/winter'],
-                ['Shorts',          '/collections/apparel'],
-                ['Smart Home',      '/collections/home'],
-                ['New Arrivals',    '/collections/new-arrivals'],
-                ['Sale',            '/collections/sale'],
-              ].map(([label, href]) => (
-                <Link key={href} to={href} className="text-sm font-medium text-neutral-600 hover:text-brand-500 hover:bg-brand-50 px-2 py-1.5 rounded-md transition-colors">
-                  {label}
-                </Link>
-              ))}
+          {/* Fallback Categories if no API filters */}
+          {products.filters.length === 0 && (
+            <div className="bg-white rounded-xl border border-neutral-100 p-4 space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-widest text-neutral-400">Categories</h3>
+              <div className="flex flex-col gap-1.5">
+                {[
+                  ['All Products',    '/collections/all'],
+                  ['Watches',         '/collections/accessories'],
+                  ['Dresses',         '/collections/apparel'],
+                  ['Shoes',           '/collections/footwear'],
+                  ['Coats',           '/collections/winter'],
+                ].map(([label, href]) => (
+                  <Link key={href} to={href} className="text-sm font-medium text-neutral-600 hover:text-brand-500 hover:bg-brand-50 px-2 py-1.5 rounded-md transition-colors">
+                    {label}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </aside>
 
         <div className="flex-1">

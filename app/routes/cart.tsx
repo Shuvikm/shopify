@@ -17,6 +17,8 @@ import {addToCart, updateCartLine, removeCartLine, updateDiscountCode} from '~/l
 import {CartLineItem} from '~/components/cart/CartLineItem';
 import {CartSummary} from '~/components/cart/CartSummary';
 
+import {MOCK_PRODUCTS} from '~/config/mock';
+
 // ─── Action ───────────────────────────────────────────────────────────────────
 
 export async function action({request, context}: ActionFunctionArgs) {
@@ -28,10 +30,35 @@ export async function action({request, context}: ActionFunctionArgs) {
     case 'ADD_TO_CART': {
       const variantIds = formData.getAll('variantId') as string[];
       const quantities = formData.getAll('quantity') as string[];
-      const lines = variantIds.map((id, index) => ({
-        merchandiseId: id,
-        quantity: quantities[index] ? Number(quantities[index]) : 1
-      }));
+      
+      // ─── Mock Product Mapping ──────────────────────────────
+      // To make the site functional for demonstration, we map mock
+      // items to a real fallback variant ID but attach custom 
+      // attributes so the UI shows the mock title/image.
+      const realVariantId = 'gid://shopify/ProductVariant/41007289630776';
+      
+      const lines = variantIds.map((id, index) => {
+        const quantity = quantities[index] ? Number(quantities[index]) : 1;
+        
+        if (!id.startsWith('gid://')) {
+          const mock = MOCK_PRODUCTS.find(m => `v-${m.id}` === id);
+          return {
+            merchandiseId: realVariantId,
+            quantity,
+            attributes: [
+              {key: '_isMock', value: 'true'},
+              {key: '_mockTitle', value: mock?.title ?? 'Premium Item'},
+              {key: '_mockImage', value: mock?.featuredImage?.url ?? ''}
+            ]
+          };
+        }
+        
+        return {
+          merchandiseId: id,
+          quantity
+        };
+      });
+
       await addToCart(cart as unknown, lines);
       return json({ok: true});
     }
@@ -63,8 +90,13 @@ export async function action({request, context}: ActionFunctionArgs) {
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
 export async function loader({context}: LoaderFunctionArgs) {
-  const cartData = await context.cart.get();
-  return json({cart: cartData});
+  try {
+    const cartData = await context.cart.get();
+    return json({cart: cartData});
+  } catch (error) {
+    console.error('Cart loader error:', error);
+    return json({cart: null});
+  }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

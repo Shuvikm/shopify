@@ -32,11 +32,22 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
   ];
 };
 
+import {MOCK_PRODUCTS} from '~/config/mock';
+
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
 export async function loader({params, request, context}: LoaderFunctionArgs) {
   const {handle} = params;
   if (!handle) throw new Response('Not found', {status: 404});
+
+  // ─── Mock Product Handling ──────────────────────────────
+  const mockProduct = MOCK_PRODUCTS.find(p => p.handle === handle);
+  if (mockProduct) {
+    return defer({
+      product: mockProduct,
+      relatedProducts: Promise.resolve({collection: {products: {nodes: MOCK_PRODUCTS.slice(0, 4)}}})
+    });
+  }
 
   const {storefront} = context;
   const selectedOptions = getSelectedProductOptions(request);

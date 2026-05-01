@@ -45,14 +45,22 @@ export function CartLineItem({line}: CartLineItemProps) {
       ? Number(updateFetcher.formData.get('quantity'))
       : quantity;
 
+  const attributes = line.attributes || [];
+  const isMock = attributes.find(a => a.key === '_isMock')?.value === 'true';
+  const mockTitle = attributes.find(a => a.key === '_mockTitle')?.value;
+  const mockImage = attributes.find(a => a.key === '_mockImage')?.value;
+
+  const displayTitle = isMock ? mockTitle : merchandise.product.title;
+  const displayImage = isMock ? mockImage : merchandise.image?.url;
+
   return (
     <div className={`flex gap-4 transition-opacity duration-200 ${isRemoving ? 'opacity-40' : ''}`}>
       {/* Image */}
       <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-neutral-50 border border-neutral-100">
-        {merchandise.image ? (
+        {displayImage ? (
           <img
-            src={merchandise.image.url}
-            alt={merchandise.image.altText ?? merchandise.title}
+            src={displayImage}
+            alt={displayTitle ?? ''}
             width={80}
             height={80}
             className="w-full h-full object-cover"
@@ -68,7 +76,7 @@ export function CartLineItem({line}: CartLineItemProps) {
           href={`/products/${merchandise.product.handle}`}
           className="text-sm font-semibold text-neutral-800 hover:text-brand-600 line-clamp-2 transition-colors"
         >
-          {merchandise.product.title}
+          {displayTitle}
         </a>
         {/* Variant options */}
         <p className="text-xs text-neutral-500">
