@@ -83,7 +83,7 @@ export async function loader({params, request, context}: LoaderFunctionArgs) {
 export default function ProductPage() {
   const {product, relatedProducts} = useLoaderData<typeof loader>();
 
-  const selectedVariant = product.selectedVariant ?? product.variants.nodes[0];
+  const selectedVariant = product.selectedVariant ?? product.variants?.nodes?.[0];
   const specsFields = product.metafield?.reference?.fields ?? [];
 
   return (

@@ -8,7 +8,8 @@ import {formatMoney, cn} from '~/lib/utils';
 
 export function StickyAddToCart({product}: {product: any}) {
   const [isVisible, setIsVisible] = useState(false);
-  const selectedVariant = product.selectedVariant ?? product.variants.nodes[0];
+  const selectedVariant = product.selectedVariant ?? product.variants?.nodes?.[0];
+  const price = selectedVariant?.price ?? product.priceRange?.minVariantPrice;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,12 +33,13 @@ export function StickyAddToCart({product}: {product: any}) {
             {product.title}
           </span>
           <span className="text-sm font-black text-brand-600">
-            {formatMoney(selectedVariant.price)}
+            {price ? formatMoney(price) : ''}
           </span>
         </div>
         <QuickAddButton
-          variantId={selectedVariant.id}
+          variantId={selectedVariant?.id ?? ''}
           quantity={1}
+          disabled={!selectedVariant || !selectedVariant.availableForSale}
           className="btn-primary !py-3 !px-6"
         >
           Add to Cart
