@@ -45,9 +45,9 @@ const MOCK_PRODUCTS = [
 ].map((p, i) => ({
   id: p.id,
   title: p.title,
-  handle: 'v2-snowboard',
+  handle: p.title.toLowerCase().replace(/\s+/g, '-'),
   vendor: 'HydroStore Premium',
-  description: `Elevate your style with our ${p.title}.`,
+  description: `Elevate your style with our ${p.title}. This premium item from our ${p.category} collection is designed for those who demand both style and performance.`,
   featuredImage: {url: MOCK_IMAGES[i % MOCK_IMAGES.length], altText: p.title, width: 800, height: 1000},
   priceRange:        {minVariantPrice: {amount: (3500 + i * 1200).toString(), currencyCode: 'INR'}},
   compareAtPriceRange:{minVariantPrice: {amount: (5500 + i * 1200).toString(), currencyCode: 'INR'}},
@@ -56,14 +56,19 @@ const MOCK_PRODUCTS = [
 
 // ─── Countdown Timer ───────────────────────────────────────────────────────────
 function useCountdown(hours: number) {
-  const [secs, setSecs] = useState(hours * 3600);
+  // Use a fixed end time to avoid resets on HMR
+  const [endTime] = useState(() => Date.now() + hours * 3600 * 1000);
+  const [now, setNow] = useState(() => Date.now());
+
   useEffect(() => {
-    const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const h = String(Math.floor(secs / 3600)).padStart(2, '0');
-  const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
-  const s = String(secs % 60).padStart(2, '0');
+
+  const diff = Math.max(0, Math.floor((endTime - now) / 1000));
+  const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+  const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+  const s = String(diff % 60).padStart(2, '0');
   return {h, m, s};
 }
 
