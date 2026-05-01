@@ -1,4 +1,28 @@
-# HydroStore — Hydrogen + Remix Headless Shopify
+# HydroStore — Premium Headless Shopify Storefront
+
+Built with **Hydrogen** + **Remix** + **Tailwind CSS** + **GSAP**.
+
+## 🚀 Project Progress & High-Converting Features
+
+### 💎 Phase 1: High-Converting Foundations (Completed)
+- [x] **Cinematic Hero**: Parallax background with entry animations.
+- [x] **Sticky Add-to-Cart**: CTA remains visible on mobile/scroll.
+- [x] **Urgency Triggers**: Flash Sale Countdown Timer & Low Stock Scarcity.
+- [x] **Trust Architecture**: Payment Badges & Dynamic Delivery Estimates.
+- [x] **Social Proof**: Integrated Reviews section with star ratings.
+
+### 🎮 Phase 2: Advanced UI Interactions (Completed)
+- [x] **GSAP "Added to Cart" Animation**: Button shrinks to a circular success state (yellow theme).
+- [x] **Build Your Own Bundle**: Split-screen "Pick 3" logic with animated wave backgrounds.
+- [x] **Smart Cart Drawer**: Progress bar for free shipping + in-cart upsells.
+- [x] **Gallery Zoom**: High-end hover zoom on product images.
+
+### 🛠️ Phase 3: Site Essentials (Completed)
+- [x] **Premium Footer**: Newsletter signup & social integration.
+- [x] **Legal Framework**: Dynamic policy pages and fallback content.
+- [x] **Filter Sidebar**: Category and Sort logic for collections.
+
+---
 
 A production-grade, headless Shopify storefront built with:
 
