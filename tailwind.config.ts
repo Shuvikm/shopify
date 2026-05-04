@@ -6,14 +6,17 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Rubik', 'Inter', 'system-ui', 'sans-serif'],
         serif: ['"Cormorant Garamond"', 'serif'],
         display: ['"Cormorant Garamond"', 'serif'],
       },
       colors: {
         brand: {
           primary: '#121212',
-          accent: '#C5A059',
+          accent: '#f6c90e',
+          black: '#303841',
+          yellow: '#f6c90e',
+
           gold: {
             50: '#FBF8F1',
             100: '#F5EDDD',

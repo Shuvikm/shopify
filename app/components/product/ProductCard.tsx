@@ -8,6 +8,8 @@ import {
   getProductImage,
   type ProductLike,
 } from '~/lib/products';
+import {LikeButton} from './LikeButton';
+
 
 interface ProductCardProps {
   product: ProductLike & {
@@ -16,7 +18,9 @@ interface ProductCardProps {
     handle: string;
   };
   loading?: boolean;
+  view?: 'list' | 'grid';
 }
+
 
 function ProductImage({
   src,
@@ -81,24 +85,11 @@ export function ProductCard({product, loading = false}: ProductCardProps) {
           )}
         </div>
 
-        {/* Wishlist Button */}
-        <button
-          type="button"
-          onClick={(event) => {
-            event.preventDefault();
-            toggle(product.id);
-          }}
-          className="absolute top-4 right-4 text-brand-primary transition-all duration-300 transform group-hover:scale-110"
-          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-        >
-          <svg
-            className={cn('w-5 h-5 transition-colors', wishlisted ? 'fill-brand-accent stroke-brand-accent' : 'fill-transparent stroke-brand-primary')}
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
+        {/* Like Button */}
+        <div className="absolute top-4 right-4 z-20">
+          <LikeButton productId={product.id} className="w-6 h-6" />
+        </div>
+
 
         {/* Quick Add Overlay */}
         {!soldOut && firstVariant?.id && (

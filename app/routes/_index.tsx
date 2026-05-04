@@ -7,6 +7,17 @@ import {Hero} from '~/components/sections/Hero';
 import {ProductCard, ProductCardSkeleton} from '~/components/product/ProductCard';
 import {dedupeProducts} from '~/lib/products';
 import {withTimeout} from '~/lib/async.server';
+import {CategoryCard} from '~/components/sections/CategoryCard';
+
+const CATEGORIES = [
+  {title: 'Electronics', handle: 'electronics', image: '/category_electronics.png', description: 'Next-gen devices'},
+  {title: 'Fashion', handle: 'fashion', image: '/category_fashion.png', description: 'Premium styles'},
+  {title: 'Home & Kitchen', handle: 'home', image: '/category_home.png', description: 'Modern living'},
+  {title: 'Beauty', handle: 'beauty', image: '/category_beauty.png', description: 'Radiant care'},
+  {title: 'Appliances', handle: 'appliances', image: '/editorial_luxury_1.webp', description: 'Smart home'},
+  {title: 'Accessories', handle: 'accessories', image: '/banner_luxury_accessories.webp', description: 'Final touches'},
+];
+
 
 export const meta: MetaFunction = () => [
   {title: 'The Collection — Curated Luxury & Minimalist Design'},
@@ -29,6 +40,28 @@ export default function Homepage() {
   return (
     <div className="bg-paper min-h-screen">
       <Hero />
+
+      {/* Shop by Category - Amazon/Flipkart Style */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-neutral-900">Shop by Category</h2>
+              <p className="text-neutral-500 text-sm">Explore our diverse collections</p>
+            </div>
+            <Link to="/collections" className="text-sm font-bold text-brand-accent hover:underline">
+              View All Categories →
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {CATEGORIES.map((cat) => (
+              <CategoryCard key={cat.handle} category={cat} />
+            ))}
+          </div>
+        </div>
+      </section>
+
 
       {/* Brand Ethos Section */}
       <section className="py-24 md:py-32 border-b border-brand-primary/5">

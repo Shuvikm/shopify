@@ -31,8 +31,9 @@ export const links: LinksFunction = () => [
   {rel: 'dns-prefetch', href: 'https://cdn.shopify.com'},
   {
     rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap',
+    href: 'https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap',
   },
+
   {
     rel: 'preload',
     href: '/hero_luxury_1.png',
@@ -92,7 +93,8 @@ export default function App() {
       <body>
         <Analytics.Provider
           cart={null}
-          shop={data?.shop}
+          shop={data?.shop as any}
+
           consent={data?.consent}
         >
           {/* Single CartProvider — data is already resolved from the loader */}

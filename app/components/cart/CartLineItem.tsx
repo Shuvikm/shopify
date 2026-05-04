@@ -1,18 +1,8 @@
-/**
- * @file CartLineItem.tsx
- * @description Individual line item in the cart drawer.
- *
- * Features:
- * - Product image + title + variant label
- * - Inline quantity stepper (useFetcher POST → /cart UPDATE_CART)
- * - Remove button (useFetcher POST → /cart REMOVE_CART_LINE)
- * - Optimistic UI: updates quantity immediately without full-page reload
- */
 import {useFetcher} from '@remix-run/react';
 import {formatMoney} from '~/lib/utils';
 import type {CartLine} from '~/graphql/CartMutations';
-import {useWishlist} from '~/hooks/useWishlist';
 import {FALLBACK_PRODUCT_IMAGE} from '~/lib/products';
+import {LikeButton} from '~/components/product/LikeButton';
 
 interface CartLineItemProps {
   line: CartLine;
@@ -23,22 +13,10 @@ export function CartLineItem({line}: CartLineItemProps) {
   const removeFetcher = useFetcher();
 
   const {merchandise, quantity, cost} = line;
-  const {isWishlisted, toggle} = useWishlist();
   const isUpdating = updateFetcher.state !== 'idle';
   const isRemoving = removeFetcher.state !== 'idle';
 
   const productId = merchandise.product.id;
-
-  function handleSaveForLater() {
-    if (!isWishlisted(productId)) {
-      toggle(productId);
-    }
-    // Remove from cart
-    const formData = new FormData();
-    formData.append('cartAction', 'REMOVE_CART_LINE');
-    formData.append('lineId', line.id);
-    removeFetcher.submit(formData, {method: 'POST', action: '/cart'});
-  }
 
   // Optimistic quantity while fetcher is in flight
   const optimisticQuantity =
@@ -50,72 +28,61 @@ export function CartLineItem({line}: CartLineItemProps) {
   const displayImage = merchandise.image?.url ?? FALLBACK_PRODUCT_IMAGE;
 
   return (
-    <div className={`flex gap-4 transition-opacity duration-200 ${isRemoving ? 'opacity-40' : ''}`}>
-      {/* Image */}
-      <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-neutral-50 border border-neutral-100">
-        {displayImage ? (
-          <img
-            src={displayImage}
-            alt={displayTitle ?? ''}
-            width={80}
-            height={80}
-            className="w-full h-full object-cover"
-            onError={(event) => {
-              event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-            }}
-          />
-        ) : (
-          <div className="w-full h-full bg-neutral-100" />
-        )}
+    <div className={`flex items-center gap-6 py-6 border-b border-neutral-100 transition-opacity duration-200 ${isRemoving ? 'opacity-40' : ''}`}>
+      {/* Image Area with yellow background on hover, like the Vue snippet */}
+      <div className="w-24 h-24 shrink-0 rounded-[2rem] overflow-hidden bg-[#eee] relative group">
+        <div className="absolute inset-0 bg-[#f6c90e] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <img
+          src={displayImage}
+          alt={displayTitle ?? ''}
+          className="relative z-10 w-full h-full object-contain p-2 transform rotate-[-12deg] group-hover:rotate-[-24deg] group-hover:scale-110 transition-transform duration-500"
+          onError={(event) => {
+            event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+          }}
+        />
       </div>
 
       {/* Details */}
-      <div className="flex-1 min-w-0 space-y-1">
-        <a
-          href={`/products/${merchandise.product.handle}`}
-          className="text-sm font-semibold text-neutral-800 hover:text-brand-600 line-clamp-2 transition-colors"
-        >
-          {displayTitle}
-        </a>
-        {/* Variant options */}
-        <p className="text-xs text-neutral-500">
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start mb-1">
+          <a
+            href={`/products/${merchandise.product.handle}`}
+            className="text-sm font-black text-[#303841] hover:text-[#f6c90e] line-clamp-2 transition-colors uppercase tracking-tight"
+          >
+            {displayTitle}
+          </a>
+          <LikeButton productId={productId} className="ml-4" />
+        </div>
+        
+        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-4">
           {merchandise.selectedOptions
             .filter((o) => o.value !== 'Default Title')
             .map((o) => o.value)
             .join(' / ')}
         </p>
 
-        <button
-          onClick={handleSaveForLater}
-          className="text-[10px] font-bold text-brand-600 hover:text-brand-700 underline uppercase tracking-tighter"
-        >
-          {isWishlisted(productId) ? 'Already in Wishlist' : 'Save for Later'}
-        </button>
-
         {/* Price + controls */}
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-sm font-bold text-neutral-900">
+        <div className="flex items-center justify-between">
+          <span className="text-xl font-black text-[#303841]">
             {formatMoney(cost.totalAmount)}
           </span>
 
-          <div className="flex items-center gap-2">
-            {/* Quantity Stepper */}
-            <div className="flex items-center border border-neutral-200 rounded-md text-xs overflow-hidden">
+          <div className="flex items-center gap-4 bg-neutral-50 px-3 py-1 rounded-full">
+            <div className="flex items-center gap-3">
               <updateFetcher.Form method="POST" action="/cart">
                 <input type="hidden" name="cartAction" value="UPDATE_CART" />
                 <input type="hidden" name="lineId" value={line.id} />
                 <input type="hidden" name="quantity" value={Math.max(1, optimisticQuantity - 1)} />
                 <button
                   type="submit"
-                  aria-label="Decrease quantity"
                   disabled={optimisticQuantity <= 1 || isUpdating}
-                  className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-40 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-[#f6c90e] hover:text-white transition-all disabled:opacity-40 font-bold"
                 >
                   −
                 </button>
               </updateFetcher.Form>
 
-              <span className="w-7 text-center font-semibold text-neutral-800 select-none" aria-live="polite">
+              <span className="w-6 text-center text-sm font-black text-[#303841] select-none">
                 {optimisticQuantity}
               </span>
 
@@ -125,24 +92,23 @@ export function CartLineItem({line}: CartLineItemProps) {
                 <input type="hidden" name="quantity" value={optimisticQuantity + 1} />
                 <button
                   type="submit"
-                  aria-label="Increase quantity"
                   disabled={isUpdating}
-                  className="w-7 h-7 flex items-center justify-center hover:bg-neutral-50 disabled:opacity-40 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-sm hover:bg-[#f6c90e] hover:text-white transition-all disabled:opacity-40 font-bold"
                 >
                   +
                 </button>
               </updateFetcher.Form>
             </div>
 
-            {/* Remove */}
+            <div className="w-[1px] h-4 bg-neutral-200" />
+
             <removeFetcher.Form method="POST" action="/cart">
               <input type="hidden" name="cartAction" value="REMOVE_CART_LINE" />
               <input type="hidden" name="lineId" value={line.id} />
               <button
                 type="submit"
-                aria-label={`Remove ${merchandise.product.title} from cart`}
                 disabled={isRemoving}
-                className="w-7 h-7 flex items-center justify-center text-neutral-400 hover:text-red-500 transition-colors rounded-md hover:bg-red-50"
+                className="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-red-500 transition-all rounded-full hover:bg-red-50"
               >
                 <TrashIcon />
               </button>
@@ -156,8 +122,8 @@ export function CartLineItem({line}: CartLineItemProps) {
 
 function TrashIcon() {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
     </svg>
   );
 }

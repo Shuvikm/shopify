@@ -12,17 +12,32 @@ export const meta: MetaFunction = () => [
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
-  const {storefront} = context;
+  const {storefront, session} = context;
+  const userId = session.get('userId');
+  
+  let customerName = 'Guest';
+  if (userId) {
+    try {
+      // const {prisma} = await import('~/lib/db.server');
+      const user = { name: 'Mock User' }; // await prisma.user.findUnique({where: {id: userId}});
+
+      if (user) customerName = user.name || user.email;
+    } catch (e) {
+      console.error('Error fetching user for account:', e);
+    }
+  }
+
   const shopDomain = new URL(`https://${storefront.getApiUrl()}`).hostname
     .replace(/\/api\/.*/, '')
     .split('/')[0];
 
   return json({
     shopDomain,
-    customerName: 'Guest',
-    recentOrders: getStoredOrders(context.session).slice(0, 3),
+    customerName,
+    recentOrders: getStoredOrders(session).slice(0, 3),
   });
 }
+
 
 export default function AccountDashboard() {
   const {shopDomain, customerName, recentOrders} = useLoaderData<typeof loader>();

@@ -52,32 +52,67 @@ const RECOMMENDATIONS_QUERY = `#graphql
 `;
 
 export async function loader({request, context}: LoaderFunctionArgs) {
-  const {storefront} = context;
+  const {storefront, session} = context;
   const url = new URL(request.url);
   const productId = url.searchParams.get('productId');
+  const userId = session.get('userId');
 
-  if (!productId) {
-    return json({products: []});
+  let products: any[] = [];
+
+  // 1. Get recommendations for the primary product if provided
+  if (productId) {
+    const formattedId = productId.includes('gid://') 
+      ? productId 
+      : `gid://shopify/Product/${productId}`;
+
+    try {
+      const {productRecommendations} = await withTimeout(storefront.query(RECOMMENDATIONS_QUERY, {
+        cache: storefront.CacheShort(),
+        variables: {
+          productId: formattedId,
+          country: storefront.i18n.country,
+          language: storefront.i18n.language,
+        },
+      }), 5000, 'primary recommendations');
+      products = [...(productRecommendations || [])];
+    } catch (error) {
+      console.error('Error fetching primary recommendations:', error);
+    }
   }
 
-  // Ensure it's a valid global ID format (gid://shopify/Product/...)
-  const formattedId = productId.includes('gid://') 
-    ? productId 
-    : `gid://shopify/Product/${productId}`;
+  // 2. If logged in, get recommendations based on liked items
+  if (userId) {
+    try {
+      /*
+      const {prisma} = await import('~/lib/db.server');
+      const likedItems = await prisma.like.findMany({
+        where: {userId},
+        take: 3,
+        orderBy: {createdAt: 'desc'}
+      });
 
-  try {
-    const {productRecommendations} = await withTimeout(storefront.query(RECOMMENDATIONS_QUERY, {
-      cache: storefront.CacheShort(),
-      variables: {
-        productId: formattedId,
-        country: storefront.i18n.country,
-        language: storefront.i18n.language,
-      },
-    }), 5000, 'recommendations');
+      for (const item of likedItems) {
+        try {
+          const {productRecommendations} = await withTimeout(storefront.query(RECOMMENDATIONS_QUERY, {
+            cache: storefront.CacheShort(),
+            variables: {
+              productId: item.productId,
+              country: storefront.i18n.country,
+              language: storefront.i18n.language,
+            },
+          }), 3000, `liked recommendation ${item.productId}`);
+          products = [...products, ...(productRecommendations || [])];
+        } catch (e) {
+          // Ignore individual failures
+        }
+      }
+      */
+    } catch (error) {
 
-    return json({products: dedupeProducts(productRecommendations || [])});
-  } catch (error) {
-    console.error('Error fetching recommendations:', error);
-    return json({products: []});
+      console.error('Error fetching liked items recommendations:', error);
+    }
   }
+
+  return json({products: dedupeProducts(products)});
 }
+

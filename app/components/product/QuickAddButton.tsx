@@ -1,11 +1,9 @@
-/**
- * @file QuickAddButton.tsx
- * @description AJAX "Add to Cart" button with GSAP animation.
- */
 import {useFetcher} from '@remix-run/react';
 import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {useCart} from '~/hooks/useCart';
 import {cn} from '~/lib/utils';
+import gsap from 'gsap';
+
 interface QuickAddButtonProps {
   variantId: string;
   quantity?: number;
@@ -28,7 +26,26 @@ export function QuickAddButton({
 
   const isLoading = fetcher.state === 'submitting' || fetcher.state === 'loading';
 
-  // Clean, CSS-based loading state logic
+  useEffect(() => {
+    if (buttonRef.current) {
+      if (isLoading || inCart) {
+        gsap.to(buttonRef.current, {
+          width: 56,
+          borderRadius: 100,
+          duration: 0.6,
+          ease: 'power4.inOut',
+        });
+      } else {
+        gsap.to(buttonRef.current, {
+          width: '100%',
+          borderRadius: 16,
+          duration: 0.6,
+          ease: 'power4.inOut',
+        });
+      }
+    }
+  }, [isLoading, inCart]);
+
   useEffect(() => {
     if (fetcher.state === 'idle' && fetcher.data?.ok) {
       setInCart(true);
@@ -41,48 +58,37 @@ export function QuickAddButton({
   }, [fetcher.state, fetcher.data, openCart]);
 
   return (
-    <fetcher.Form method="POST" action="/cart" className="w-full">
+    <fetcher.Form method="POST" action="/cart" className="w-full flex justify-center">
       <input type="hidden" name="cartAction" value="ADD_TO_CART" />
       <input type="hidden" name="variantId" value={variantId} />
       <input type="hidden" name="quantity" value={quantity} />
 
-      <div className="flex justify-center">
-        <button
-          ref={buttonRef}
-          type="submit"
-          disabled={disabled || isLoading || inCart || !variantId}
-          className={cn(
-            'btn btn-primary w-full relative overflow-hidden transition-all',
-            inCart && 'bg-green-500 hover:bg-green-600',
-            className,
-          )}
-        >
-          {/* Success Checkmark */}
-          {inCart ? (
-            <span className="flex items-center justify-center w-full h-full">
-              <CheckIcon />
-            </span>
-          ) : (
-            <>
-              {/* Shimmer loading overlay */}
-              {isLoading && (
-                <span className="absolute inset-0 bg-white/20 animate-pulse" />
-              )}
-              <span className={cn('transition-opacity duration-300', isLoading && 'opacity-0')}>
-                {children ?? 'Add to Cart'}
-              </span>
-              {isLoading && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <LoadingSpinner />
-                </span>
-              )}
-            </>
-          )}
-        </button>
-      </div>
+      <button
+        ref={buttonRef}
+        type="submit"
+        disabled={disabled || isLoading || inCart || !variantId}
+        className={cn(
+          'h-14 font-black text-[11px] uppercase tracking-[0.2em] relative overflow-hidden transition-colors flex items-center justify-center',
+          inCart ? 'bg-green-500 text-white' : 'bg-[#f6c90e] text-black hover:bg-[#f6c90e]/90',
+          disabled && 'opacity-50 cursor-not-allowed',
+          className,
+        )}
+        style={{ width: '100%', borderRadius: 16 }}
+      >
+        {inCart ? (
+          <CheckIcon />
+        ) : isLoading ? (
+          <LoadingSpinner />
+        ) : (
+          <span className="whitespace-nowrap px-4">
+            {children ?? 'ADD TO CART'}
+          </span>
+        )}
+      </button>
     </fetcher.Form>
   );
 }
+
 
 function CheckIcon() {
   return (

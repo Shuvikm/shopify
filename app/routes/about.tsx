@@ -1,4 +1,5 @@
-import {type MetaFunction} from '@remix-run/server-runtime';
+import {type MetaFunction} from '@remix-run/react';
+
 import {Link} from '@remix-run/react';
 import {BrandStory} from '~/components/sections/BrandStory';
 

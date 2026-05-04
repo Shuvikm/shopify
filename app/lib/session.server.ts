@@ -7,7 +7,10 @@
  * that may not exist in the installed package version.
  */
 
+import {redirect} from '@remix-run/server-runtime';
+
 // Simple typed session data
+
 type SessionPayload = Record<string, string>;
 
 // Use any-typed storage to avoid generics constraint fights
@@ -77,6 +80,15 @@ export class AppSession {
     this.set('cartId', cartId);
   }
 
+  get userId(): string | undefined {
+    return this.get('userId');
+  }
+
+  set userId(userId: string) {
+    this.set('userId', userId);
+  }
+
+
   destroy(): Promise<string> {
     if (this.storage?.destroySession) return this.storage.destroySession(this.session);
     return Promise.resolve('');
@@ -87,3 +99,16 @@ export class AppSession {
     return Promise.resolve('');
   }
 }
+
+export async function createUserSession(userId: string, redirectTo: string) {
+  // This is a bit tricky because we don't have direct access to the session instance here
+  // without the request context. 
+  // We'll need to handle this in the action or pass the session object.
+  return redirect(redirectTo);
+}
+
+export async function getCustomerAccessToken(request: Request) {
+  // Mocking this for now as we are using custom auth
+  return null;
+}
+

@@ -9,7 +9,7 @@
  * - Keyboard: Escape closes, Enter navigates to /search?q=...
  */
 import {Dialog, Transition} from '@headlessui/react';
-import {useNavigate} from '@remix-run/react';
+import {Link, useNavigate} from '@remix-run/react';
 import {Fragment, useEffect, useRef} from 'react';
 import {usePredictiveSearch} from '~/hooks/usePredictiveSearch';
 import {SearchResults} from './SearchResults';

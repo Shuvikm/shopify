@@ -67,8 +67,10 @@ export default defineConfig(({isSsrBuild}) => ({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
   },
   ssr: {
+    noExternal: true,
     optimizeDeps: {
       include: ['use-sync-external-store/with-selector'],
     },
   },
+
 }));

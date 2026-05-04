@@ -65,93 +65,70 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
           leaveTo="translate-x-full"
         >
           <Dialog.Panel
-            className="fixed inset-y-0 right-0 flex flex-col bg-white shadow-drawer"
-            style={{width: 'min(28rem, 100vw)'}}
+            className="fixed inset-y-0 right-0 flex flex-col bg-white shadow-drawer overflow-hidden"
+            style={{width: 'min(340px, 100vw)'}}
           >
-            <div className="flex items-center justify-between px-5 h-16 border-b border-neutral-100 shrink-0">
-              <Dialog.Title className="font-semibold text-lg text-neutral-900 flex items-center gap-2">
-                Cart
-                {(totalQuantity ?? 0) > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center">
-                    {totalQuantity}
-                  </span>
-                )}
-              </Dialog.Title>
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn-ghost w-8 h-8 p-0 rounded-full"
-              >
-                <CloseIcon />
-              </button>
-            </div>
+            {/* Yellow Wave Background effect */}
+            <div className="absolute top-[-20%] left-[-50%] w-[300px] h-[300px] bg-[#f6c90e] rounded-full z-0 opacity-20" />
+            
+            <div className="relative z-10 flex flex-col h-full px-7">
+              <div className="app-bar py-4">
+                <img className="w-12" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1315882/pngwave.png" alt="Logo" />
+              </div>
+              
+              <h2 className="text-2xl font-black text-[#303841] my-5">Your cart</h2>
 
-            {cartLines.length === 0 ? (
-              <EmptyCart onClose={onClose} />
-            ) : (
-              <>
-                <FreeShippingBar subtotal={subtotal} />
+              {cartLines.length === 0 ? (
+                <div className="no-content">
+                  <p className="text-sm text-[#303841]">Your cart is empty.</p>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 overflow-y-auto scrollbar-none pb-6">
+                    <div className="space-y-0">
+                      {cartLines.map((line) => (
+                        <CartLineItem key={line.id} line={line} />
+                      ))}
+                    </div>
 
-                <ul className="flex-1 overflow-y-auto scrollbar-thin px-5 py-4 space-y-4">
-                  {cartLines.map((line) => (
-                    <li key={line.id}>
-                      <CartLineItem line={line} />
-                    </li>
-                  ))}
-
-                  <div className="pt-8 mt-8 border-t border-neutral-50">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4">
-                      You might also like
-                    </p>
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none">
-                      {fetcher.state === 'loading' ? (
-                        [1, 2].map((i) => (
-                          <div key={i} className="min-w-[140px] group cursor-pointer">
-                            <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden">
-                              <div className="w-full h-full bg-gradient-to-br from-neutral-200 to-neutral-50 animate-pulse" />
-                            </div>
-                            <div className="h-3 w-3/4 bg-neutral-200 rounded animate-pulse mb-1" />
-                            <div className="h-3 w-1/2 bg-neutral-200 rounded animate-pulse" />
-                          </div>
-                        ))
-                      ) : recommendations.length > 0 ? (
-                        recommendations.map((product) => {
-                          const firstVariant = product.variants?.nodes?.[0];
-                          if (!firstVariant) return null;
-                          
-                          return (
-                            <Link key={product.id} to={`/products/${product.handle}`} onClick={onClose} className="min-w-[140px] group cursor-pointer block">
-                              <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden">
-                                {product.featuredImage ? (
+                    <div className="pt-8 mt-8 border-t border-neutral-100">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4">
+                        You might also like
+                      </p>
+                      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none">
+                        {fetcher.state === 'loading' ? (
+                          [1, 2].map((i) => (
+                            <div key={i} className="min-w-[120px] bg-neutral-50 rounded-2xl aspect-square animate-pulse" />
+                          ))
+                        ) : recommendations.length > 0 ? (
+                          recommendations.map((product) => (
+                            <Link key={product.id} to={`/products/${product.handle}`} onClick={onClose} className="min-w-[120px] group block">
+                              <div className="aspect-square bg-neutral-100 rounded-2xl mb-2 overflow-hidden relative">
+                                <div className="absolute inset-0 bg-[#f6c90e] opacity-0 group-hover:opacity-10 transition-opacity" />
+                                {product.featuredImage && (
                                   <img
                                     src={product.featuredImage.url}
                                     alt={product.title}
-                                    loading="eager"
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                    onError={(event) => {
-                                      event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
-                                    }}
+                                    className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform"
                                   />
-                                ) : (
-                                  <div className="w-full h-full bg-neutral-200" />
                                 )}
                               </div>
-                              <p className="text-[11px] font-bold text-neutral-800 line-clamp-1">{product.title}</p>
-                              <p className="text-[10px] text-brand-600 font-black">{formatMoney(firstVariant.price)}</p>
+                              <p className="text-[10px] font-black text-[#303841] line-clamp-1 uppercase tracking-tighter">{product.title}</p>
                             </Link>
-                          );
-                        })
-                      ) : (
-                        <p className="text-[11px] text-neutral-400">Continue shopping to see more.</p>
-                      )}
+                          ))
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </ul>
 
-                <CartSummary cost={cost} checkoutUrl={checkoutUrl ?? '/cart'} />
-              </>
-            )}
+                  <div className="py-6 border-t border-neutral-100">
+                    <CartSummary cost={cost} checkoutUrl={checkoutUrl ?? '/cart'} />
+                  </div>
+                </div>
+              )}
+            </div>
           </Dialog.Panel>
+
         </Transition.Child>
       </Dialog>
     </Transition>

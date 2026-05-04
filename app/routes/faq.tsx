@@ -1,4 +1,5 @@
-import {type MetaFunction} from '@remix-run/server-runtime';
+import {type MetaFunction} from '@remix-run/react';
+
 import {useState} from 'react';
 import {Link} from '@remix-run/react';
 
