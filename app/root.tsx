@@ -3,17 +3,26 @@
  * @description Root layout for the Hydrogen storefront.
  */
 import {type LinksFunction, type LoaderFunctionArgs} from '@remix-run/server-runtime';
-import {defer} from '@remix-run/server-runtime';
-import {Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, type ShouldRevalidateFunction} from '@remix-run/react';
+import {json} from '@remix-run/server-runtime';
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  type ShouldRevalidateFunction,
+} from '@remix-run/react';
 import {Analytics, getShopAnalytics, useNonce} from '@shopify/hydrogen';
 import {CartProvider} from '@shopify/hydrogen-react';
+import {Suspense} from 'react';
 
 import appStyles from '~/styles/app.css?url';
 import {Header, Footer} from '~/components/layout';
 import {CartDrawer} from '~/components/cart';
 import {useCart} from '~/hooks/useCart';
-import {withTimeout} from '~/lib/async.server';
 import {NewsletterPopup} from '~/components/NewsletterPopup';
+import {AbandonedCartNotifier} from '~/components/cart/AbandonedCartNotifier';
 
 export const links: LinksFunction = () => [
   {rel: 'preconnect', href: 'https://cdn.shopify.com'},
@@ -39,15 +48,16 @@ export const links: LinksFunction = () => [
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront, env, cart} = context;
   const selectedLocale = storefront.i18n;
-  
-  // Defer cart to avoid blocking the main document response
-  const cartData = cart.get().catch(() => null);
-  
-  return defer({
+
+  // Await the cart synchronously so CartProvider always receives fresh data —
+  // this prevents the cart from flashing empty after add/remove mutations.
+  const cartData = await cart.get().catch(() => null);
+
+  return json({
     cart: cartData,
     shop: getShopAnalytics({
-      storefront, 
-      publicStorefrontId: env.PUBLIC_STOREFRONT_ID || '0'
+      storefront,
+      publicStorefrontId: env.PUBLIC_STOREFRONT_ID || '0',
     }),
     consent: {
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN,
@@ -67,9 +77,6 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({formMethod, currentU
   return false;
 };
 
-import {Suspense} from 'react';
-import {Await} from '@remix-run/react';
-
 export default function App() {
   const nonce = useNonce();
   const data = useLoaderData<typeof loader>();
@@ -83,25 +90,18 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Analytics.Provider 
-          cart={null} 
-          shop={data?.shop} 
+        <Analytics.Provider
+          cart={null}
+          shop={data?.shop}
           consent={data?.consent}
         >
+          {/* Single CartProvider — data is already resolved from the loader */}
           <CartProvider
             countryCode={data?.selectedLocale?.country ?? 'IN'}
+            data={(data?.cart as any) ?? undefined}
           >
-            <Suspense fallback={<AppLayout />}>
-              <Await resolve={data?.cart}>
-                {(cart) => (
-                  <CartProvider 
-                    countryCode={data?.selectedLocale?.country ?? 'IN'}
-                    data={cart ?? undefined}
-                  >
-                    <AppLayout />
-                  </CartProvider>
-                )}
-              </Await>
+            <Suspense>
+              <AppLayout />
             </Suspense>
           </CartProvider>
         </Analytics.Provider>
@@ -111,9 +111,6 @@ export default function App() {
     </html>
   );
 }
-
-import {NewsletterPopup} from '~/components/NewsletterPopup';
-import {AbandonedCartNotifier} from '~/components/cart/AbandonedCartNotifier';
 
 function AppLayout() {
   const {isOpen, closeCart} = useCart();
@@ -125,7 +122,6 @@ function AppLayout() {
         <Outlet />
       </main>
       <Footer />
-      {/* Global Components */}
       <CartDrawer isOpen={isOpen} onClose={closeCart} />
       <NewsletterPopup />
       <AbandonedCartNotifier />
@@ -154,7 +150,7 @@ export function ErrorBoundary() {
               {error.status === 404 ? 'Page not found' : 'Something went wrong'}
             </h2>
             <p className="text-neutral-500 mb-8">
-              {error.status === 404 
+              {error.status === 404
                 ? "The page you're looking for doesn't exist or has been moved."
                 : (error.data?.message ?? 'An unexpected error occurred.')}
             </p>
@@ -185,9 +181,13 @@ export function ErrorBoundary() {
           <h1 className="text-4xl font-bold text-neutral-800 mb-4">Something went wrong</h1>
           <p className="text-neutral-500 mb-8">
             We encountered an error while rendering this page. <br />
-            <span className="text-xs font-mono bg-neutral-100 p-1 rounded mt-2 inline-block">{errorMessage}</span>
+            <span className="text-xs font-mono bg-neutral-100 p-1 rounded mt-2 inline-block">
+              {errorMessage}
+            </span>
           </p>
-          <a href="/" className="btn-primary">Back to Home</a>
+          <a href="/" className="btn-primary">
+            Back to Home
+          </a>
         </div>
         <Scripts nonce={nonce} />
       </body>

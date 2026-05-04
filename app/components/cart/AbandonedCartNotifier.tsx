@@ -2,23 +2,23 @@ import {useState, useEffect} from 'react';
 import {useCart} from '~/hooks/useCart';
 
 export function AbandonedCartNotifier() {
-  const {cart} = useCart();
+  const cartState = useCart();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const isDismissed = sessionStorage.getItem('abandoned_cart_dismissed');
     if (isDismissed) return;
 
-    // Check if cart has items and user has been on site for 2 minutes
     const timer = setTimeout(() => {
-      const lines = (cart as any)?.lines?.nodes ?? [];
+      // useCart spreads Hydrogen's cart fields directly — access lines without .cart
+      const lines = (cartState as any)?.lines?.nodes ?? [];
       if (lines.length > 0) {
         setIsVisible(true);
       }
-    }, 120000); // 2 minutes
+    }, 120000);
 
     return () => clearTimeout(timer);
-  }, [cart]);
+  }, [cartState]);
 
   const dismiss = () => {
     setIsVisible(false);

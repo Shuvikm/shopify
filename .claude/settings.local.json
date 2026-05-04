@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"c:\\\\projects\\\\shopify\" -Recurse -Include \"*.ts\", \"*.tsx\", \"*.js\", \"*.json\" -Exclude \"*node_modules*\" -File)",
+      "Bash(Select-Object -First 50)"
+    ]
+  }
+}

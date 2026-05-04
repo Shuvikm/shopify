@@ -10,12 +10,13 @@ import {CartLineItem} from '~/components/cart/CartLineItem';
 import {CartSummary} from '~/components/cart/CartSummary';
 import {withTimeout} from '~/lib/async.server';
 
-function ensureShopifyGid(value: FormDataEntryValue | null): string {
-  const id = String(value ?? '');
-  if (!id.startsWith('gid://shopify/ProductVariant/')) {
-    throw new Response('Invalid Shopify variant ID.', {status: 400});
-  }
-  return id;
+function normalizeVariantId(value: FormDataEntryValue | null): string {
+  const id = String(value ?? '').trim();
+  if (!id) throw new Response('Missing variant ID.', {status: 400});
+  if (id.startsWith('gid://shopify/ProductVariant/')) return id;
+  // Storefront API sometimes returns bare numeric IDs — auto-prefix them.
+  if (/^\d+$/.test(id)) return `gid://shopify/ProductVariant/${id}`;
+  throw new Response('Invalid variant ID.', {status: 400});
 }
 
 function safeQuantity(value: FormDataEntryValue | null): number {
@@ -44,7 +45,7 @@ export async function action({request, context}: ActionFunctionArgs) {
         const quantities = formData.getAll('quantity');
 
         const lines = variantIds.map((id, index) => ({
-          merchandiseId: ensureShopifyGid(id),
+          merchandiseId: normalizeVariantId(id),
           quantity: safeQuantity(quantities[index] ?? null),
         }));
 

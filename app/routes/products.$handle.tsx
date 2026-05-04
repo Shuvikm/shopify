@@ -20,22 +20,24 @@ import {dedupeImages, dedupeProducts, getProductImage} from '~/lib/products';
 import {withTimeout} from '~/lib/async.server';
 import {getProductSchema} from '~/lib/seo';
 
-export const links: LinksFunction = ({data}) => {
-  const product = (data as any)?.product;
-  const image = product ? getProductImage(product) : null;
-  
-  if (!image?.url) return [];
-  
-  return [
-    {
-      rel: 'preload',
-      href: image.url,
-      as: 'image',
-      type: 'image/webp',
-      imagesrcset: image.url,
-      fetchpriority: 'high',
-    } as any,
-  ];
+export const links: LinksFunction = (args?: any) => {
+  try {
+    const product = args?.data?.product;
+    const image = product ? getProductImage(product) : null;
+    if (!image?.url) return [];
+    return [
+      {
+        rel: 'preload',
+        href: image.url,
+        as: 'image',
+        type: 'image/webp',
+        imagesrcset: image.url,
+        fetchpriority: 'high',
+      } as any,
+    ];
+  } catch {
+    return [];
+  }
 };
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
