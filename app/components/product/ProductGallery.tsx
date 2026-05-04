@@ -4,13 +4,14 @@
  *
  * Features:
  * - Thumbnail rail + large hero image
- * - Lazy-loaded via native `loading="lazy"`
+ * - Fast image loading with eager hero/thumb strategy
  * - Keyboard-accessible thumbnail navigation
  * - Smooth fade transition between images
  * - Renders from `product.images.nodes` or `product.media.nodes`
  */
 import {useState, useCallback} from 'react';
 import {cn} from '~/lib/utils';
+import {dedupeImages, FALLBACK_PRODUCT_IMAGE} from '~/lib/products';
 
 interface GalleryImage {
   id: string;
@@ -28,17 +29,21 @@ interface ProductGalleryProps {
 
 export function ProductGallery({images, selectedVariantImage}: ProductGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const safeImages = dedupeImages([
+    ...(images ?? []),
+    ...(selectedVariantImage ? [selectedVariantImage] : []),
+  ]);
 
   // If a variant image is provided and differs from current, focus it
   const activeImage = selectedVariantImage
-    ? images.find((img) => img.url === selectedVariantImage.url) ?? images[activeIndex]
-    : images[activeIndex];
+    ? safeImages.find((img) => img.url === selectedVariantImage.url) ?? safeImages[activeIndex]
+    : safeImages[activeIndex];
 
   const handleThumbnailClick = useCallback((idx: number) => {
     setActiveIndex(idx);
   }, []);
 
-  if (!images.length) {
+  if (!safeImages.length) {
     return (
       <div className="aspect-square bg-neutral-100 rounded-2xl flex items-center justify-center">
         <span className="text-neutral-400 text-sm">No images</span>
@@ -49,13 +54,13 @@ export function ProductGallery({images, selectedVariantImage}: ProductGalleryPro
   return (
     <div className="flex gap-4">
       {/* Thumbnail Rail */}
-      {images.length > 1 && (
+      {safeImages.length > 1 && (
         <div
           className="hidden sm:flex flex-col gap-2 w-16 shrink-0"
           role="listbox"
           aria-label="Product images"
         >
-          {images.map((img, idx) => (
+          {safeImages.map((img, idx) => (
             <button
               key={img.id}
               type="button"
@@ -75,8 +80,12 @@ export function ProductGallery({images, selectedVariantImage}: ProductGalleryPro
                 alt={img.altText ?? ''}
                 width={64}
                 height={64}
-                loading="lazy"
+                loading="eager"
+                fetchPriority="high"
                 className="w-full h-full object-cover"
+                onError={(event) => {
+                  event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                }}
               />
             </button>
           ))}
@@ -95,15 +104,18 @@ export function ProductGallery({images, selectedVariantImage}: ProductGalleryPro
             loading="eager"
             fetchPriority="high"
             className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110"
+            onError={(event) => {
+              event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+            }}
           />
           {/* Subtle Overlay Shadow */}
           <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_80px_rgba(0,0,0,0.02)]" />
         </div>
 
         {/* Mobile dot indicators */}
-        {images.length > 1 && (
+        {safeImages.length > 1 && (
           <div className="flex sm:hidden justify-center gap-1.5 mt-3" aria-hidden="true">
-            {images.map((_, idx) => (
+            {safeImages.map((_, idx) => (
               <button
                 key={idx}
                 type="button"

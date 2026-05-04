@@ -1,40 +1,24 @@
-/**
- * @file sections/Hero.tsx
- * @description Amazon-style rotating deal banner with multiple slides.
- */
 import {Link} from '@remix-run/react';
 import {useState, useEffect} from 'react';
 
 const SLIDES = [
   {
-    badge: '🔥 Deal of the Day',
-    headline: 'Up to 70% Off',
-    sub: 'Luxury Watches & Premium Accessories',
-    cta: 'Shop Now',
-    href: '/collections/accessories',
-    bg: 'from-neutral-950 to-blue-900',
-    accent: 'text-yellow-400',
-    img: '/hero_watch_banner_1777624303208.png',
-  },
-  {
-    badge: '⚡ Flash Sale',
-    headline: 'New Arrivals',
-    sub: 'Designer Coats, Dresses & Footwear',
+    subtitle: 'The 2026 Collection',
+    headline: 'Timeless Elegance Redefined',
+    description: 'Discover the art of minimalist design through our curated collection of premium accessories and lifestyle essentials.',
     cta: 'Explore Collection',
-    href: '/collections/apparel',
-    bg: 'from-purple-950 to-neutral-900',
-    accent: 'text-pink-400',
-    img: '/hero_apparel_banner_1777624636523.png',
+    href: '/collections/accessories',
+    img: '/hero_luxury_1.png',
+    alignment: 'left',
   },
   {
-    badge: '🌟 Best Sellers',
-    headline: 'Premium Footwear',
-    sub: 'Engineered for comfort. Built for every journey.',
-    cta: 'Shop Footwear',
-    href: '/collections/footwear',
-    bg: 'from-emerald-950 to-neutral-900',
-    accent: 'text-emerald-400',
-    img: '/hero_footwear_banner_1777624327251.png',
+    subtitle: 'Craftsmanship First',
+    headline: 'Detail in Every Thread',
+    description: 'Bespoke apparel designed for those who appreciate the finer details of modern tailoring and sustainable luxury.',
+    cta: 'View Apparel',
+    href: '/collections/apparel',
+    img: '/hero_luxury_2.png',
+    alignment: 'right',
   },
 ];
 
@@ -42,73 +26,90 @@ export function Hero() {
   const [active, setActive] = useState(0);
 
   useEffect(() => {
-    const t = setInterval(() => setActive(a => (a + 1) % SLIDES.length), 5000);
+    const t = setInterval(() => setActive(a => (a + 1) % SLIDES.length), 8000);
     return () => clearInterval(t);
   }, []);
 
   const slide = SLIDES[active];
 
   return (
-    <section className={`relative bg-gradient-to-r ${slide.bg} overflow-hidden min-h-[480px] flex items-center transition-all duration-1000`}>
-      {/* Background image */}
-      <div className="absolute inset-0 overflow-hidden">
-        <img
-          key={slide.img}
-          src={slide.img}
-          alt=""
-          className="w-full h-full object-cover opacity-40 animate-slowZoom"
-        />
+    <section className="relative w-full h-[90vh] overflow-hidden bg-paper">
+      {/* Background Image with Ken Burns effect */}
+      <div className="absolute inset-0 z-0">
+        <div className="relative w-full h-full overflow-hidden">
+          <img
+            key={slide.img}
+            src={slide.img}
+            alt=""
+            className="w-full h-full object-cover animate-slowZoom"
+            loading={active === 0 ? "eager" : "lazy"}
+            fetchPriority={active === 0 ? "high" : "low"}
+          />
+          {/* Overlay for readability */}
+          <div className="absolute inset-0 bg-brand-primary/10 backdrop-contrast-[1.1]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-paper/40 via-transparent to-transparent" />
+        </div>
       </div>
-      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
 
-      <div className="container mx-auto px-6 relative z-10 py-16">
-        <div className="max-w-xl">
-          <span className={`inline-block text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm mb-4 ${slide.accent}`}>
-            {slide.badge}
-          </span>
-          <h1 className={`text-5xl md:text-7xl font-black text-white leading-none tracking-tighter mb-3 ${slide.accent}`}>
+      {/* Content Overlay */}
+      <div className="container relative z-10 h-full flex items-center">
+        <div className={`max-w-2xl px-6 md:px-12 transition-all duration-1000 transform ${active % 2 === 0 ? 'ml-0' : 'ml-auto text-right'}`}>
+          <div className="overflow-hidden mb-6">
+            <p className="text-brand-accent font-sans text-xs uppercase tracking-[0.3em] animate-slide-in-left">
+              {slide.subtitle}
+            </p>
+          </div>
+          
+          <h1 className="text-brand-primary mb-8 animate-fadeIn">
             {slide.headline}
           </h1>
-          <p className="text-lg text-neutral-200 mb-8 leading-relaxed">{slide.sub}</p>
-          <div className="flex items-center gap-4">
+          
+          <p className="text-neutral-700 text-lg mb-12 max-w-lg leading-relaxed animate-fadeIn opacity-0 [animation-delay:400ms] [animation-fill-mode:forwards]">
+            {slide.description}
+          </p>
+          
+          <div className={`flex items-center gap-8 animate-fadeIn opacity-0 [animation-delay:600ms] [animation-fill-mode:forwards] ${active % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
             <Link
               to={slide.href}
-              className="px-8 py-3.5 bg-brand-500 hover:bg-brand-400 text-white font-black uppercase tracking-wider text-sm rounded-lg transition-all active:scale-95 shadow-lg shadow-brand-500/30"
+              className="group relative inline-flex items-center gap-3 px-10 py-4 bg-brand-primary text-white text-sm uppercase tracking-widest hover:bg-brand-accent transition-all duration-500 overflow-hidden"
             >
-              {slide.cta} →
+              <span className="relative z-10">{slide.cta}</span>
+              <span className="relative z-10 group-hover:translate-x-1 transition-transform">→</span>
             </Link>
-            <Link to="/collections/all" className="text-white/70 hover:text-white text-sm font-medium transition-colors">
+            
+            <Link 
+              to="/collections/all" 
+              className="text-brand-primary text-xs uppercase tracking-widest border-b border-brand-primary/20 hover:border-brand-primary transition-all py-1"
+            >
               Shop All
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Slide indicators */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+      {/* Luxury Slide Indicators */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 z-20 flex items-end gap-6">
         {SLIDES.map((_, i) => (
           <button
             key={i}
             onClick={() => setActive(i)}
-            className={`w-2 h-2 rounded-full transition-all ${i === active ? 'w-8 bg-white' : 'bg-white/40'}`}
-            aria-label={`Slide ${i + 1}`}
-          />
+            className="group flex flex-col items-center gap-3"
+            aria-label={`Go to slide ${i + 1}`}
+          >
+            <span className={`text-[10px] tracking-widest transition-all ${i === active ? 'text-brand-accent' : 'text-brand-primary/40'}`}>
+              0{i + 1}
+            </span>
+            <div className={`h-[1px] transition-all duration-700 ${i === active ? 'w-16 bg-brand-accent' : 'w-8 bg-brand-primary/20 group-hover:w-12'}`} />
+          </button>
         ))}
       </div>
-
-      {/* Left/Right arrows */}
-      <button
-        onClick={() => setActive(a => (a - 1 + SLIDES.length) % SLIDES.length)}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-      >
-        ‹
-      </button>
-      <button
-        onClick={() => setActive(a => (a + 1) % SLIDES.length)}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all"
-      >
-        ›
-      </button>
+      
+      {/* Decorative side element */}
+      <div className="absolute left-12 top-1/2 -translate-y-1/2 z-10 hidden lg:block overflow-hidden">
+        <p className="text-[10px] uppercase tracking-[0.5em] text-brand-primary/20 [writing-mode:vertical-rl] rotate-180">
+          ESTABLISHED IN 2026 — PARIS • LONDON • NEW YORK
+        </p>
+      </div>
     </section>
   );
 }

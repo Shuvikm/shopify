@@ -12,28 +12,51 @@ import appStyles from '~/styles/app.css?url';
 import {Header, Footer} from '~/components/layout';
 import {CartDrawer} from '~/components/cart';
 import {useCart} from '~/hooks/useCart';
+import {withTimeout} from '~/lib/async.server';
+import {NewsletterPopup} from '~/components/NewsletterPopup';
 
 export const links: LinksFunction = () => [
+  {rel: 'preconnect', href: 'https://cdn.shopify.com'},
   {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
   {rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous'},
-  {rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'},
+  {rel: 'dns-prefetch', href: 'https://cdn.shopify.com'},
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap',
+  },
+  {
+    rel: 'preload',
+    href: '/hero_luxury_1.png',
+    as: 'image',
+    type: 'image/png',
+    imagesrcset: '/hero_luxury_1.png',
+    fetchpriority: 'high',
+  } as any,
   {rel: 'stylesheet', href: appStyles},
   {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
   const {storefront, env, cart} = context;
+  const selectedLocale = storefront.i18n;
+  
+  // Defer cart to avoid blocking the main document response
+  const cartData = cart.get().catch(() => null);
+  
   return defer({
-    cart: cart.get(),
-    shop: getShopAnalytics({storefront, publicStorefrontId: env.PUBLIC_STOREFRONT_ID}),
+    cart: cartData,
+    shop: getShopAnalytics({
+      storefront, 
+      publicStorefrontId: env.PUBLIC_STOREFRONT_ID || '0'
+    }),
     consent: {
-      checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN,
+      checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN,
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
       withPrivacyBanner: true,
-      country: context.storefront.i18n.country,
-      language: context.storefront.i18n.language,
+      country: selectedLocale.country,
+      language: selectedLocale.language,
     },
-    selectedLocale: storefront.i18n,
+    selectedLocale,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
   });
 }
@@ -43,6 +66,9 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({formMethod, currentU
   if (currentUrl.toString() !== nextUrl.toString()) return true;
   return false;
 };
+
+import {Suspense} from 'react';
+import {Await} from '@remix-run/react';
 
 export default function App() {
   const nonce = useNonce();
@@ -57,9 +83,26 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Analytics.Provider cart={data.cart} shop={data.shop} consent={data.consent}>
-          <CartProvider countryCode={data.selectedLocale.country}>
-            <AppLayout />
+        <Analytics.Provider 
+          cart={null} 
+          shop={data?.shop} 
+          consent={data?.consent}
+        >
+          <CartProvider
+            countryCode={data?.selectedLocale?.country ?? 'IN'}
+          >
+            <Suspense fallback={<AppLayout />}>
+              <Await resolve={data?.cart}>
+                {(cart) => (
+                  <CartProvider 
+                    countryCode={data?.selectedLocale?.country ?? 'IN'}
+                    data={cart ?? undefined}
+                  >
+                    <AppLayout />
+                  </CartProvider>
+                )}
+              </Await>
+            </Suspense>
           </CartProvider>
         </Analytics.Provider>
         <ScrollRestoration nonce={nonce} />
@@ -68,6 +111,9 @@ export default function App() {
     </html>
   );
 }
+
+import {NewsletterPopup} from '~/components/NewsletterPopup';
+import {AbandonedCartNotifier} from '~/components/cart/AbandonedCartNotifier';
 
 function AppLayout() {
   const {isOpen, closeCart} = useCart();
@@ -81,6 +127,8 @@ function AppLayout() {
       <Footer />
       {/* Global Components */}
       <CartDrawer isOpen={isOpen} onClose={closeCart} />
+      <NewsletterPopup />
+      <AbandonedCartNotifier />
     </div>
   );
 }

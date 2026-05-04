@@ -7,35 +7,27 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['"Cormorant Garamond"', 'serif'],
+        display: ['"Cormorant Garamond"', 'serif'],
       },
       colors: {
         brand: {
-          50:  '#f0f4ff',
-          100: '#dde6ff',
-          200: '#c2d1ff',
-          300: '#9bb2ff',
-          400: '#7089ff',
-          500: '#4f63f8',   // primary
-          600: '#3a47e8',
-          700: '#2e38cc',
-          800: '#2830a5',
-          900: '#262e82',
-          950: '#171a4e',
+          primary: '#121212',
+          accent: '#C5A059',
+          gold: {
+            50: '#FBF8F1',
+            100: '#F5EDDD',
+            200: '#EBD9B6',
+            300: '#E1C28D',
+            400: '#D7AC66',
+            500: '#C5A059',
+            600: '#A6864A',
+            700: '#876C3C',
+            800: '#68532E',
+            900: '#493920',
+          },
         },
-        neutral: {
-          50:  '#f8f8f8',
-          100: '#f0f0f0',
-          200: '#e4e4e4',
-          300: '#d1d1d1',
-          400: '#a3a3a3',
-          500: '#737373',
-          600: '#525252',
-          700: '#3d3d3d',
-          800: '#262626',
-          900: '#171717',
-          950: '#0a0a0a',
-        },
+        paper: '#F9F8F6',
       },
       spacing: {
         '18': '4.5rem',
@@ -53,8 +45,11 @@ export default {
       },
       animation: {
         'skeleton': 'skeleton 1.5s ease-in-out infinite',
-        'slide-in-right': 'slideInRight 0.3s ease-out',
-        'fade-in': 'fadeIn 0.2s ease-out',
+        'slide-in-right': 'slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+        'fade-in': 'fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'fade-in-up': 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'zoom-in': 'zoomIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'slowZoom': 'slowZoom 20s ease-in-out infinite alternate',
       },
       keyframes: {
         skeleton: {
@@ -62,13 +57,25 @@ export default {
           '50%': {opacity: '1'},
         },
         slideInRight: {
-          from: {transform: 'translateX(100%)'},
-          to: {transform: 'translateX(0)'},
+          from: {transform: 'translateX(100%)', opacity: '0'},
+          to: {transform: 'translateX(0)', opacity: '1'},
         },
         fadeIn: {
           from: {opacity: '0'},
           to: {opacity: '1'},
         },
+        fadeInUp: {
+          from: {opacity: '0', transform: 'translateY(20px)'},
+          to: {opacity: '1', transform: 'translateY(0)'},
+        },
+        zoomIn: {
+          from: {opacity: '0', transform: 'scale(0.95)'},
+          to: {opacity: '1', transform: 'scale(1)'},
+        },
+        slowZoom: {
+          from: {transform: 'scale(1)'},
+          to: {transform: 'scale(1.1)'},
+        }
       },
       boxShadow: {
         card: '0 2px 8px 0 rgb(0 0 0 / 0.08)',

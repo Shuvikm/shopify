@@ -17,15 +17,18 @@ export default async function handleRequest(
   remixContext: EntryContext,
   context: AppLoadContext,
 ) {
-  console.log('--- CONTEXT DEBUG ---');
-  console.log('keys:', Object.keys(context || {}));
-  console.log('env defined?', !!context?.env);
-
   const {nonce, header, NonceProvider} = createContentSecurityPolicy({
     shop: {
       checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
       storeDomain: context.env.PUBLIC_STORE_DOMAIN,
     },
+    fontSrc: ["'self'", "fonts.gstatic.com", "data:"],
+    scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+    scriptSrcElem: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
+    styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+    imgSrc: ["'self'", "cdn.shopify.com", "data:", "lh3.googleusercontent.com", "https://*.razorpay.com"],
+    connectSrc: ["'self'", "cdn.shopify.com", "*.shopify.com", "https://monorail-edge.shopifysvc.com", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+    frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
   });
 
   const body = await renderToReadableStream(

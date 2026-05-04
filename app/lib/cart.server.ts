@@ -13,17 +13,17 @@ type AnyCart = {
 };
 
 export async function addToCart(cart: unknown, lines: CartLineInput[]) {
-  await (cart as AnyCart).addLines(lines);
+  return (cart as AnyCart).addLines(lines);
 }
 
 export async function updateCartLine(cart: unknown, lines: CartLineUpdateInput[]) {
-  await (cart as AnyCart).updateLines(lines);
+  return (cart as AnyCart).updateLines(lines);
 }
 
 export async function removeCartLine(cart: unknown, lineIds: string[]) {
-  await (cart as AnyCart).removeLines(lineIds);
+  return (cart as AnyCart).removeLines(lineIds);
 }
 
 export async function updateDiscountCode(cart: unknown, codes: string[]) {
-  await (cart as AnyCart).updateDiscountCodes(codes);
+  return (cart as AnyCart).updateDiscountCodes(codes);
 }

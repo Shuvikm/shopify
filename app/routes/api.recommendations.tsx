@@ -3,6 +3,8 @@
  * @description Resource route for fetching product recommendations.
  */
 import {type LoaderFunctionArgs, json} from '@remix-run/server-runtime';
+import {dedupeProducts} from '~/lib/products';
+import {withTimeout} from '~/lib/async.server';
 
 const RECOMMENDATIONS_QUERY = `#graphql
   query ProductRecommendations(
@@ -64,15 +66,16 @@ export async function loader({request, context}: LoaderFunctionArgs) {
     : `gid://shopify/Product/${productId}`;
 
   try {
-    const {productRecommendations} = await storefront.query(RECOMMENDATIONS_QUERY, {
+    const {productRecommendations} = await withTimeout(storefront.query(RECOMMENDATIONS_QUERY, {
+      cache: storefront.CacheShort(),
       variables: {
         productId: formattedId,
         country: storefront.i18n.country,
         language: storefront.i18n.language,
       },
-    });
+    }), 5000, 'recommendations');
 
-    return json({products: productRecommendations || []});
+    return json({products: dedupeProducts(productRecommendations || [])});
   } catch (error) {
     console.error('Error fetching recommendations:', error);
     return json({products: []});

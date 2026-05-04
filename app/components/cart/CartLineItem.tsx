@@ -12,6 +12,7 @@ import {useFetcher} from '@remix-run/react';
 import {formatMoney} from '~/lib/utils';
 import type {CartLine} from '~/graphql/CartMutations';
 import {useWishlist} from '~/hooks/useWishlist';
+import {FALLBACK_PRODUCT_IMAGE} from '~/lib/products';
 
 interface CartLineItemProps {
   line: CartLine;
@@ -45,13 +46,8 @@ export function CartLineItem({line}: CartLineItemProps) {
       ? Number(updateFetcher.formData.get('quantity'))
       : quantity;
 
-  const attributes = line.attributes || [];
-  const isMock = attributes.find(a => a.key === '_isMock')?.value === 'true';
-  const mockTitle = attributes.find(a => a.key === '_mockTitle')?.value;
-  const mockImage = attributes.find(a => a.key === '_mockImage')?.value;
-
-  const displayTitle = isMock ? mockTitle : merchandise.product.title;
-  const displayImage = isMock ? mockImage : merchandise.image?.url;
+  const displayTitle = merchandise.product.title;
+  const displayImage = merchandise.image?.url ?? FALLBACK_PRODUCT_IMAGE;
 
   return (
     <div className={`flex gap-4 transition-opacity duration-200 ${isRemoving ? 'opacity-40' : ''}`}>
@@ -64,6 +60,9 @@ export function CartLineItem({line}: CartLineItemProps) {
             width={80}
             height={80}
             className="w-full h-full object-cover"
+            onError={(event) => {
+              event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+            }}
           />
         ) : (
           <div className="w-full h-full bg-neutral-100" />

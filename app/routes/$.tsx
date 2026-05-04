@@ -1,51 +1,48 @@
-/**
- * @file routes/$.tsx
- * @description Catch-all 404 route.
- * Matches any URL that no other route handles.
- * Renders a clean, branded "Page Not Found" page.
- */
 import type {MetaFunction} from '@remix-run/react';
-import {Link, useLocation} from '@remix-run/react';
+import {Link} from '@remix-run/react';
 import type {LoaderFunctionArgs} from '@remix-run/server-runtime';
 
 export const meta: MetaFunction = () => [
-  {title: '404 – Page Not Found'},
+  {title: '404 – Selection Not Found'},
   {name: 'robots', content: 'noindex'},
 ];
 
-/** Throw a 404 so Remix routes the correct HTTP status code. */
 export async function loader({}: LoaderFunctionArgs): Promise<never> {
   throw new Response('Not Found', {status: 404});
 }
 
 export default function NotFound() {
-  const location = useLocation();
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 py-24">
-      {/* Large 404 */}
-      <p className="text-[120px] md:text-[180px] font-black leading-none text-neutral-100 select-none">
-        404
+    <div className="bg-paper flex flex-col items-center justify-center min-h-[80vh] text-center px-6 py-24">
+      <p className="text-[10px] uppercase tracking-[0.5em] text-brand-accent mb-8">
+        Selection Not Found
       </p>
-
-      <h1 className="text-3xl md:text-4xl font-bold text-neutral-900 -mt-6 mb-3">
-        Page Not Found
+      
+      <h1 className="text-brand-primary mb-12">
+        A Timeless Error
       </h1>
-      <p className="text-neutral-500 mb-2 max-w-md">
-        The page{' '}
-        <code className="text-brand-500 bg-brand-50 px-1.5 py-0.5 rounded text-sm">
-          {location.pathname}
-        </code>{' '}
-        doesn't exist or has been moved.
+      
+      <p className="text-neutral-500 font-light max-w-md mx-auto mb-16 leading-relaxed">
+        The archive you are seeking is currently unavailable or has been relocated. We invite you to return to our curated collections.
       </p>
 
-      <div className="flex flex-wrap items-center justify-center gap-3 mt-8">
-        <Link to="/" className="btn btn-primary px-6" prefetch="intent">
-          Back to Home
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
+        <Link 
+          to="/" 
+          className="px-12 py-5 bg-brand-primary text-white text-[10px] uppercase tracking-[0.3em] hover:bg-brand-accent transition-all duration-700 shadow-xl shadow-brand-primary/5"
+        >
+          Return to Entry
         </Link>
-        <Link to="/collections/all" className="btn btn-secondary px-6" prefetch="intent">
-          Shop All Products
+        <Link 
+          to="/collections/all" 
+          className="text-brand-primary text-[10px] uppercase tracking-[0.3em] border-b border-brand-primary/20 hover:border-brand-primary transition-all pb-1"
+        >
+          View Full Archive
         </Link>
       </div>
+      
+      {/* Decorative */}
+      <div className="mt-24 w-[1px] h-12 bg-brand-accent/30" />
     </div>
   );
 }

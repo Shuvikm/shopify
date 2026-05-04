@@ -1,10 +1,13 @@
-/**
- * @file routes/products.$handle.tsx
- * @description High-Converting Product Detail Page (PDP).
- */
-import {defer} from '@remix-run/server-runtime';
-import type {LoaderFunctionArgs} from '@remix-run/server-runtime';
-import {useLoaderData, Await, type MetaFunction} from '@remix-run/react';
+import {defer, json} from '@remix-run/server-runtime';
+import type {LoaderFunctionArgs, LinksFunction} from '@remix-run/server-runtime';
+import {
+  Await,
+  Link,
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError,
+  type MetaFunction,
+} from '@remix-run/react';
 import {Suspense} from 'react';
 import {getSelectedProductOptions, Analytics} from '@shopify/hydrogen';
 
@@ -12,155 +15,173 @@ import {PRODUCT_QUERY} from '~/graphql/ProductQuery';
 import {COLLECTION_QUERY} from '~/graphql/CollectionQuery';
 import {ProductGallery} from '~/components/product/ProductGallery';
 import {ProductForm} from '~/components/product/ProductForm';
-import {ProductSpecs} from '~/components/product/ProductSpecs';
-import {ProductReviews} from '~/components/product/ProductReviews';
-import {ProductCard} from '~/components/product/ProductCard';
+import {ProductCard, ProductCardSkeleton} from '~/components/product/ProductCard';
+import {dedupeImages, dedupeProducts, getProductImage} from '~/lib/products';
+import {withTimeout} from '~/lib/async.server';
+import {getProductSchema} from '~/lib/seo';
 
-// ─── Meta ─────────────────────────────────────────────────────────────────────
+export const links: LinksFunction = ({data}) => {
+  const product = (data as any)?.product;
+  const image = product ? getProductImage(product) : null;
+  
+  if (!image?.url) return [];
+  
+  return [
+    {
+      rel: 'preload',
+      href: image.url,
+      as: 'image',
+      type: 'image/webp',
+      imagesrcset: image.url,
+      fetchpriority: 'high',
+    } as any,
+  ];
+};
 
 export const meta: MetaFunction<typeof loader> = ({data}) => {
   const product = data?.product;
   if (!product) return [{title: 'Product not found'}];
 
   return [
-    {title: product.seo?.title ?? product.title},
-    {name: 'description', content: product.seo?.description ?? product.description?.slice(0, 155)},
+    {title: `${product.title} — The Collection`},
+    {name: 'description', content: product.seo?.description ?? product.description?.slice(0, 155) ?? ''},
     {property: 'og:title', content: product.seo?.title ?? product.title},
-    {property: 'og:description', content: product.seo?.description ?? ''},
-    {property: 'og:image', content: product.featuredImage?.url ?? ''},
+    {property: 'og:description', content: product.seo?.description ?? product.description ?? ''},
+    {property: 'og:image', content: product.featuredImage?.url ?? product.images?.nodes?.[0]?.url ?? ''},
     {property: 'og:type', content: 'product'},
   ];
 };
 
-import {MOCK_PRODUCTS} from '~/config/mock';
-
-// ─── Loader ───────────────────────────────────────────────────────────────────
-
 export async function loader({params, request, context}: LoaderFunctionArgs) {
-  const {handle} = params;
+  const handle = params.handle;
   if (!handle) throw new Response('Not found', {status: 404});
-
-  // ─── Mock Product Handling ──────────────────────────────
-  const mockProduct = MOCK_PRODUCTS.find(p => p.handle === handle);
-  if (mockProduct) {
-    return defer({
-      product: mockProduct,
-      relatedProducts: Promise.resolve({collection: {products: {nodes: MOCK_PRODUCTS.slice(0, 4)}}})
-    });
-  }
 
   const {storefront} = context;
   const selectedOptions = getSelectedProductOptions(request);
 
-  const {product} = await storefront.query(PRODUCT_QUERY, {
-    variables: {
-      handle,
-      selectedOptions,
-      language: storefront.i18n.language,
-      country: storefront.i18n.country,
-    },
-  });
+  try {
+    const {product} = await withTimeout(storefront.query(PRODUCT_QUERY, {
+      cache: storefront.CacheShort(),
+      variables: {
+        handle,
+        selectedOptions,
+        language: storefront.i18n.language,
+        country: storefront.i18n.country,
+      },
+    }), 7000, `product ${handle}`);
 
-  if (!product?.id) {
-    throw new Response(`Product "${handle}" not found`, {status: 404});
+    if (!product?.id) {
+      throw new Response(`Product "${handle}" not found`, {status: 404});
+    }
+
+    const relatedHandle = product.collections?.nodes?.[0]?.handle ?? 'all';
+    const relatedProducts = withTimeout(storefront.query(COLLECTION_QUERY, {
+      cache: storefront.CacheShort(),
+      variables: {
+        handle: relatedHandle,
+        first: 5,
+        language: storefront.i18n.language,
+        country: storefront.i18n.country,
+      },
+    }), 7000, `related products ${handle}`).catch(() => ({collection: {products: {nodes: []}}}));
+
+    return defer({product, relatedProducts});
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    throw json({message: 'Unable to retrieve selection.'}, {status: 502});
   }
-
-  // Cross-sell query (related products)
-  const relatedProducts = storefront.query(COLLECTION_QUERY, {
-    variables: {
-      handle: 'frontpage',
-      first: 4,
-      language: storefront.i18n.language,
-      country: storefront.i18n.country,
-    },
-  });
-
-  return defer({product, relatedProducts});
 }
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ProductPage() {
   const {product, relatedProducts} = useLoaderData<typeof loader>();
 
-  const selectedVariant = product.selectedVariant ?? product.variants?.nodes?.[0];
-  const specsFields = product.metafield?.reference?.fields ?? [];
+  const selectedVariant = product.selectedVariant ?? product.variants?.nodes?.[0] ?? null;
+  const galleryImages = dedupeImages([
+    ...(product.images?.nodes ?? []),
+    ...(selectedVariant?.image ? [selectedVariant.image] : []),
+  ]);
+  const productForForm = {...product, selectedVariant};
 
   return (
-    <div className="container mx-auto px-6 py-10 md:py-16">
+    <div className="bg-paper min-h-screen">
       {/* Breadcrumb */}
-      <nav className="text-xs text-neutral-400 mb-8 flex items-center gap-1.5" aria-label="Breadcrumb">
-        <a href="/" className="hover:text-brand-500 transition-colors">Home</a>
-        <span>/</span>
-        <a href="/collections/all" className="hover:text-brand-500 transition-colors">Shop</a>
-        <span>/</span>
-        <span className="text-neutral-600 font-medium" aria-current="page">{product.title}</span>
+      <nav className="container mx-auto px-6 py-8" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-4 text-[10px] uppercase tracking-[0.2em] text-neutral-400">
+          <li><Link to="/" className="hover:text-brand-primary transition-colors">Home</Link></li>
+          <li>/</li>
+          <li><Link to="/collections/all" className="hover:text-brand-primary transition-colors">Archive</Link></li>
+          <li>/</li>
+          <li className="text-brand-primary truncate max-w-[200px]">{product.title}</li>
+        </ol>
       </nav>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 xl:gap-24 mb-24">
-        {/* Left — Gallery */}
-        <div>
-          <ProductGallery
-            images={product.images.nodes}
-            selectedVariantImage={selectedVariant?.image ?? undefined}
-          />
-        </div>
-
-        {/* Right — Info + Form */}
-        <div className="space-y-4">
-          {product.vendor && (
-            <p className="text-xs font-black uppercase tracking-widest text-brand-600">
-              {product.vendor}
-            </p>
-          )}
-
-          <h1 className="text-4xl md:text-5xl font-black text-neutral-900 leading-none tracking-tight">
-            {product.title}
-          </h1>
-
-          {/* Social Proof badge */}
-          <div className="flex items-center gap-2">
-            <div className="text-yellow-400">★★★★★</div>
-            <span className="text-xs font-bold text-neutral-500 underline">124 Reviews</span>
+      <div className="container mx-auto px-6 pb-24 md:pb-32">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 xl:gap-24">
+          {/* Gallery */}
+          <div className="lg:col-span-7">
+            <ProductGallery
+              images={galleryImages}
+              selectedVariantImage={selectedVariant?.image ?? undefined}
+            />
           </div>
 
-          <ProductForm product={product} />
+          {/* Info */}
+          <div className="lg:col-span-5">
+            <div className="sticky top-28">
+              <div className="mb-12">
+                <p className="text-[10px] uppercase tracking-[0.4em] text-brand-accent mb-4">
+                  {product.vendor ?? 'The Collection'}
+                </p>
+                <h1 className="text-brand-primary mb-4 leading-tight">
+                  {product.title}
+                </h1>
+                <div className="w-12 h-[1px] bg-brand-accent" />
+              </div>
 
-          {specsFields.length > 0 && (
-            <ProductSpecs fields={specsFields} />
-          )}
+              <ProductForm product={productForForm} />
+            </div>
+          </div>
+        </div>
+
+        {/* Related Selection */}
+        <div className="mt-32 pt-24 border-t border-brand-primary/5">
+          <div className="text-center mb-16">
+             <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent mb-4">Complete the Look</p>
+             <h2 className="text-brand-primary">Related Selection</h2>
+          </div>
+          
+          <Suspense fallback={
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              {Array.from({length: 4}).map((_, i) => <ProductCardSkeleton key={i} />)}
+            </div>
+          }>
+            <Await resolve={relatedProducts}>
+              {(resolved: any) => {
+                const products = dedupeProducts(resolved?.collection?.products?.nodes ?? [])
+                  .filter((related: any) => related.id !== product.id)
+                  .slice(0, 4);
+
+                return products.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    {products.map((related: any) => (
+                      <ProductCard key={related.id} product={related} />
+                    ))}
+                  </div>
+                ) : null;
+              }}
+            </Await>
+          </Suspense>
         </div>
       </div>
 
-      {/* Social Proof — Reviews */}
-      <ProductReviews metaobjectFields={product.reviewsMetafield?.reference?.fields} />
-
-      {/* Cross-sell — People also bought */}
-      <div className="border-t border-neutral-100 py-16 md:py-24">
-        <h2 className="text-3xl font-black text-neutral-900 mb-12 text-center">People also bought</h2>
-        <Suspense fallback={<div className="h-96 bg-neutral-50 animate-pulse rounded-2xl" />}>
-          <Await resolve={relatedProducts}>
-            {(resolved: any) => (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {resolved.collection?.products?.nodes.map((p: any) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </div>
-            )}
-          </Await>
-        </Suspense>
-      </div>
-
-      {/* Analytics */}
       <Analytics.ProductView
         data={{
           products: [
             {
               id: product.id,
               title: product.title,
-              price: selectedVariant?.price.amount ?? '0',
-              vendor: product.vendor,
+              price: selectedVariant?.price?.amount ?? '0',
+              vendor: product?.vendor ?? '',
               variantId: selectedVariant?.id ?? '',
               variantTitle: selectedVariant?.title ?? '',
               quantity: 1,
@@ -168,6 +189,29 @@ export default function ProductPage() {
           ],
         }}
       />
+
+      {/* JSON-LD Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(getProductSchema(product, selectedVariant)),
+        }}
+      />
+    </div>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+  return (
+    <div className="container mx-auto px-6 py-32 text-center bg-paper min-h-screen">
+      <p className="text-[10px] uppercase tracking-[0.4em] text-brand-accent mb-6">Error</p>
+      <h2 className="text-brand-primary mb-8">
+        {isRouteErrorResponse(error) && error.status === 404 ? 'Selection Not Found' : 'Unexpected Error'}
+      </h2>
+      <Link to="/collections/all" className="inline-flex px-10 py-4 bg-brand-primary text-white text-[10px] uppercase tracking-[0.2em] hover:bg-brand-accent transition-all duration-500">
+        Return to Archive
+      </Link>
     </div>
   );
 }

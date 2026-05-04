@@ -79,6 +79,26 @@ export const PRODUCT_FRAGMENT = `#graphql
       title
       description
     }
+    featuredImage {
+      id
+      url
+      altText
+      width
+      height
+    }
+    collections(first: 1) {
+      nodes {
+        handle
+      }
+    }
+    rating: metafield(namespace: "reviews", key: "rating") {
+      value
+      type
+    }
+    ratingCount: metafield(namespace: "reviews", key: "rating_count") {
+      value
+      type
+    }
     images(first: 8) {
       nodes {
         id
@@ -192,6 +212,14 @@ export const PRODUCT_CARD_FRAGMENT = `#graphql
       name
       values
     }
+    rating: metafield(namespace: "reviews", key: "rating") {
+      value
+      type
+    }
+    ratingCount: metafield(namespace: "reviews", key: "rating_count") {
+      value
+      type
+    }
     variants(first: 1) {
       nodes {
         id
@@ -269,6 +297,16 @@ export interface ProductType {
     minVariantPrice: {amount: string; currencyCode: string};
   };
   seo: {title: string | null; description: string | null};
+  featuredImage: {
+    id: string;
+    url: string;
+    altText: string | null;
+    width: number;
+    height: number;
+  } | null;
+  collections: {nodes: Array<{handle: string}>};
+  rating: {value: string; type: string} | null;
+  ratingCount: {value: string; type: string} | null;
   images: {
     nodes: Array<{
       id: string;

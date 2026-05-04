@@ -22,52 +22,51 @@ interface MobileMenuProps {
 export function MobileMenu({isOpen, onClose, navItems}: MobileMenuProps) {
   return (
     <Transition show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-[150]" onClose={onClose}>
         {/* Backdrop */}
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-200"
+          enter="ease-out duration-500"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="ease-in duration-150"
+          leave="ease-in duration-300"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
-            aria-hidden="true"
-          />
+          <div className="fixed inset-0 bg-brand-primary/20 backdrop-blur-md" aria-hidden="true" />
         </Transition.Child>
 
         {/* Panel */}
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-250"
+          enter="transform transition ease-out duration-700"
           enterFrom="-translate-x-full"
           enterTo="translate-x-0"
-          leave="ease-in duration-200"
+          leave="transform transition ease-in duration-500"
           leaveFrom="translate-x-0"
           leaveTo="-translate-x-full"
         >
-          <Dialog.Panel className="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl flex flex-col">
+          <Dialog.Panel className="fixed inset-y-0 left-0 w-full max-w-sm bg-white shadow-2xl flex flex-col p-8">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 h-16 border-b border-neutral-100">
-              <Dialog.Title className="font-bold text-lg text-neutral-900">
-                Menu
-              </Dialog.Title>
+            <div className="flex items-center justify-between mb-16">
+              <div className="flex flex-col">
+                <span className="text-lg font-serif tracking-widest text-brand-primary">THE COLLECTION</span>
+                <span className="text-[6px] uppercase tracking-[0.5em] text-brand-accent">Menu Selection</span>
+              </div>
               <button
                 type="button"
-                aria-label="Close menu"
-                id="mobile-menu-close-btn"
                 onClick={onClose}
-                className="btn-ghost w-8 h-8 p-0 rounded-full"
+                className="text-brand-primary hover:text-brand-accent transition-colors"
+                aria-label="Close menu"
               >
-                <CloseIcon />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12" strokeWidth="1.5" />
+                </svg>
               </button>
             </div>
 
             {/* Nav Links */}
-            <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+            <nav className="flex-1 flex flex-col gap-8">
               {navItems.map((item) => (
                 <NavLink
                   key={item.href}
@@ -76,10 +75,8 @@ export function MobileMenu({isOpen, onClose, navItems}: MobileMenuProps) {
                   onClick={onClose}
                   className={({isActive}) =>
                     cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
-                      isActive
-                        ? 'bg-brand-50 text-brand-600'
-                        : 'text-neutral-700 hover:bg-neutral-50',
+                      'text-xl font-serif tracking-wide transition-all duration-300',
+                      isActive ? 'text-brand-accent pl-2' : 'text-brand-primary hover:pl-2'
                     )
                   }
                 >
@@ -88,15 +85,20 @@ export function MobileMenu({isOpen, onClose, navItems}: MobileMenuProps) {
               ))}
             </nav>
 
-            {/* Footer CTA */}
-            <div className="p-5 border-t border-neutral-100">
-              <NavLink
-                to="/search"
-                onClick={onClose}
-                className="btn btn-secondary w-full justify-center"
-              >
-                Search Products
-              </NavLink>
+            {/* Footer */}
+            <div className="mt-auto pt-12 border-t border-brand-primary/5 space-y-8">
+              <div className="flex flex-col gap-2">
+                <p className="text-[8px] uppercase tracking-[0.3em] text-neutral-400">Concierge</p>
+                <a href="mailto:assistance@thecollection.com" className="text-xs text-brand-primary">assistance@thecollection.com</a>
+              </div>
+              
+              <div className="flex gap-6">
+                {['IG', 'TW', 'FB'].map(social => (
+                  <span key={social} className="text-[10px] tracking-widest text-brand-primary/40 hover:text-brand-accent cursor-pointer transition-colors">
+                    {social}
+                  </span>
+                ))}
+              </div>
             </div>
           </Dialog.Panel>
         </Transition.Child>

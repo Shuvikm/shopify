@@ -8,6 +8,8 @@ import {type LoaderFunctionArgs, json} from '@remix-run/server-runtime';
 import {useLoaderData, Form, useNavigation, type MetaFunction} from '@remix-run/react';
 import {PREDICTIVE_SEARCH_QUERY} from '~/graphql/PredictiveSearchQuery';
 import {SearchResults} from '~/components/search/SearchResults';
+import {dedupeProducts} from '~/lib/products';
+import {withTimeout} from '~/lib/async.server';
 
 export const meta: MetaFunction<typeof loader> = ({data}) => [
   {title: `Search: ${data?.query ?? ''}` },
@@ -22,21 +24,32 @@ export async function loader({request, context}: LoaderFunctionArgs) {
     return json({query, result: null});
   }
 
-  const {predictiveSearch: result} = await context.storefront.query(
-    PREDICTIVE_SEARCH_QUERY,
-    {
-      variables: {
-        query,
-        limit: 24,
-        limitScope: 'EACH',
-        types: ['PRODUCT', 'COLLECTION'],
-        country: context.storefront.i18n.country,
-        language: context.storefront.i18n.language,
+  try {
+    const {predictiveSearch: result} = await withTimeout(context.storefront.query(
+      PREDICTIVE_SEARCH_QUERY,
+      {
+        cache: context.storefront.CacheShort(),
+        variables: {
+          query,
+          limit: 24,
+          limitScope: 'EACH',
+          types: ['PRODUCT', 'COLLECTION'],
+          country: context.storefront.i18n.country,
+          language: context.storefront.i18n.language,
+        },
       },
-    },
-  );
+    ), 7000, 'search');
 
-  return json({query, result: result ?? null});
+    return json({
+      query,
+      result: result
+        ? {...result, products: dedupeProducts(result.products ?? []), collections: result.collections ?? []}
+        : null,
+    });
+  } catch (error) {
+    console.error('Search loader error:', error);
+    return json({query, result: {products: [], collections: [], pages: [], articles: []}, error: 'SEARCH_FAILED'});
+  }
 }
 
 export default function SearchPage() {
@@ -44,7 +57,7 @@ export default function SearchPage() {
   const navigation = useNavigation();
   const isSearching = navigation.state !== 'idle';
 
-  const totalResults = (result?.products.length ?? 0) + (result?.collections.length ?? 0);
+  const totalResults = ((result as any)?.products?.length ?? 0) + ((result as any)?.collections?.length ?? 0);
 
   return (
     <div className="container mx-auto py-10 md:py-14 max-w-4xl">

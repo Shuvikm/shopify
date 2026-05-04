@@ -8,6 +8,7 @@ import {json} from '@remix-run/server-runtime';
 import type {LoaderFunctionArgs} from '@remix-run/server-runtime';
 import {useLoaderData, Link, type MetaFunction} from '@remix-run/react';
 import {Image} from '@shopify/hydrogen';
+import {withTimeout} from '~/lib/async.server';
 
 // ─── GraphQL ──────────────────────────────────────────────────────────────────
 
@@ -49,15 +50,21 @@ export const meta: MetaFunction = () => [
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
 export async function loader({context}: LoaderFunctionArgs) {
-  const {collections} = await context.storefront.query(COLLECTIONS_QUERY, {
-    variables: {
-      first: 24,
-      language: context.storefront.i18n.language,
-      country: context.storefront.i18n.country,
-    },
-  });
+  try {
+    const {collections} = await withTimeout(context.storefront.query(COLLECTIONS_QUERY, {
+      cache: context.storefront.CacheShort(),
+      variables: {
+        first: 24,
+        language: context.storefront.i18n.language,
+        country: context.storefront.i18n.country,
+      },
+    }), 7000, 'collections index');
 
-  return json({collections: collections.nodes});
+    return json({collections: collections?.nodes ?? []});
+  } catch (error) {
+    console.error('Collections index loader error:', error);
+    return json({collections: []});
+  }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -87,7 +94,7 @@ export default function CollectionsIndex() {
                 data={collection.image}
                 sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
+                loading="eager"
               />
             ) : (
               <div className="absolute inset-0 bg-gradient-to-br from-brand-900 to-brand-600" />

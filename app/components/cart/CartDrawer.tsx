@@ -10,6 +10,7 @@ import {formatMoney} from '~/lib/utils';
 import {CartLineItem} from './CartLineItem';
 import {CartSummary} from './CartSummary';
 import {FreeShippingBar} from './FreeShippingBar';
+import {FALLBACK_PRODUCT_IMAGE} from '~/lib/products';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -122,7 +123,15 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
                             <Link key={product.id} to={`/products/${product.handle}`} onClick={onClose} className="min-w-[140px] group cursor-pointer block">
                               <div className="aspect-square bg-neutral-100 rounded-lg mb-2 overflow-hidden">
                                 {product.featuredImage ? (
-                                  <img src={product.featuredImage.url} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                  <img
+                                    src={product.featuredImage.url}
+                                    alt={product.title}
+                                    loading="eager"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                    onError={(event) => {
+                                      event.currentTarget.src = FALLBACK_PRODUCT_IMAGE;
+                                    }}
+                                  />
                                 ) : (
                                   <div className="w-full h-full bg-neutral-200" />
                                 )}

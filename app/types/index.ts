@@ -50,3 +50,51 @@ export interface Image {
   width?: number | null;
   height?: number | null;
 }
+
+// ─── Cart Types ──────────────────────────────────────────────────────────────
+
+export interface CartLine {
+  id: string;
+  quantity: number;
+  cost: {
+    totalAmount: Money;
+    amountPerQuantity: Money;
+    compareAtAmountPerQuantity?: Money | null;
+  };
+  merchandise: {
+    id: string;
+    title: string;
+    selectedOptions: SelectedOption[];
+    product: {
+      id: string;
+      title: string;
+      handle: string;
+      featuredImage?: Image | null;
+      images?: Connection<Image>;
+    };
+    image?: Image | null;
+    price: Money;
+    compareAtPrice?: Money | null;
+  };
+  attributes: Array<{key: string; value: string}>;
+}
+
+export interface Cart {
+  id: string;
+  checkoutUrl: string;
+  totalQuantity: number;
+  buyerIdentity: {
+    countryCode: string | null;
+  };
+  lines: Connection<CartLine>;
+  cost: {
+    subtotalAmount: Money;
+    totalTaxAmount?: Money | null;
+    totalDutyAmount?: Money | null;
+    totalAmount: Money;
+  };
+  discountCodes: Array<{
+    applicable: boolean;
+    code: string;
+  }>;
+}

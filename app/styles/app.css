@@ -7,16 +7,21 @@
 ───────────────────────────────────────── */
 @layer base {
   :root {
-    --color-brand-primary: #4f63f8;
-    --color-brand-dark:    #2e38cc;
-    --header-height:       4rem;
-    --drawer-width:        26rem;
-    --radius-sm:           0.375rem;
-    --radius-md:           0.625rem;
-    --radius-lg:           1rem;
-    --transition-fast:     150ms ease;
-    --transition-base:     250ms ease;
-    --transition-slow:     400ms ease;
+    /* Luxury Palette */
+    --color-brand-primary: #121212; /* Deep Charcoal */
+    --color-brand-accent:  #C5A059; /* Champagne Gold */
+    --color-bg-paper:      #F9F8F6; /* Warm Paper */
+    --color-border:        #E5E0D8;
+    
+    --header-height:       4.5rem;
+    --drawer-width:        28rem;
+    --radius-none:         0px; /* Luxury often uses sharp corners or very subtle rounding */
+    --radius-sm:           2px;
+    --radius-md:           4px;
+    --radius-lg:           8px;
+    
+    --transition-premium:  600ms cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-base:     300ms ease;
   }
 
   *, *::before, *::after {
@@ -27,27 +32,31 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    background-color: var(--color-bg-paper);
   }
 
   body {
-    @apply bg-white text-neutral-900 font-sans text-base leading-relaxed;
+    @apply bg-transparent text-neutral-900 font-sans text-base leading-[1.6];
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold leading-tight tracking-tight;
+    @apply font-serif leading-[1.2] tracking-[-0.02em] font-light;
   }
+
+  h1 { @apply text-5xl md:text-7xl; }
+  h2 { @apply text-4xl md:text-5xl; }
+  h3 { @apply text-2xl md:text-3xl; }
 
   a {
     color: inherit;
     text-decoration: none;
+    @apply transition-colors duration-200;
   }
 
   img, video {
     max-width: 100%;
-  }
-
-  button {
-    cursor: pointer;
+    height: auto;
   }
 }
 
@@ -58,82 +67,78 @@
 
   /* --- Buttons --- */
   .btn {
-    @apply inline-flex items-center justify-center gap-2
-           px-5 py-2.5 rounded-md font-medium text-sm
-           transition-all duration-200 select-none
+    @apply inline-flex items-center justify-center gap-3
+           px-8 py-4 font-sans text-[10px] uppercase tracking-[0.2em]
+           transition-all duration-500 select-none
            focus:outline-none focus-visible:ring-2
-           focus-visible:ring-offset-2 focus-visible:ring-brand-500
-           disabled:opacity-50 disabled:pointer-events-none;
+           focus-visible:ring-offset-2 focus-visible:ring-brand-accent
+           disabled:opacity-20 disabled:pointer-events-none;
   }
 
   .btn-primary {
-    @apply btn bg-brand-500 text-white
-           hover:bg-brand-600 active:bg-brand-700;
+    @apply btn bg-brand-primary text-white
+           hover:bg-brand-accent active:scale-95;
   }
 
   .btn-secondary {
-    @apply btn bg-white text-neutral-900 border border-neutral-200
-           hover:border-brand-400 hover:text-brand-600;
+    @apply btn bg-transparent text-brand-primary border border-brand-primary/10
+           hover:border-brand-primary active:scale-95;
   }
 
   .btn-ghost {
-    @apply btn text-neutral-600 hover:bg-neutral-100;
+    @apply btn text-neutral-600 hover:bg-neutral-50;
   }
 
   .btn-lg {
-    @apply px-6 py-3 text-base rounded-lg;
+    @apply px-12 py-5 text-xs;
   }
 
-  /* --- Product Card ---
-     NOTE: `group` cannot be used with @apply.
-     Add the `group` class directly in JSX on the card element.
-  */
+  /* --- Product Card --- */
   .product-card {
-    @apply relative rounded-xl overflow-hidden bg-white border border-neutral-100
-           transition-all duration-300 hover:border-brand-300 hover:translate-y-[-2px];
+    @apply relative transition-all duration-700;
   }
 
   /* --- Form Controls --- */
   .input {
-    @apply w-full px-4 py-2.5 rounded-md border border-neutral-200
-           text-sm bg-white text-neutral-900
-           placeholder:text-neutral-400
-           focus:outline-none focus:ring-2
-           focus:ring-brand-400 focus:border-transparent
-           transition-all duration-150;
+    @apply w-full px-4 py-3 border border-brand-primary/10
+           text-sm bg-white text-brand-primary
+           placeholder:text-neutral-300
+           focus:outline-none focus:ring-1
+           focus:ring-brand-accent focus:border-brand-accent
+           transition-all duration-300;
   }
 
   /* --- Skeleton Loader --- */
   .skeleton {
-    @apply bg-neutral-100 animate-skeleton rounded;
+    @apply bg-neutral-50 animate-skeleton;
   }
 
   /* --- Badges --- */
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center px-2 py-0.5 text-[9px] uppercase tracking-widest font-medium;
   }
 
   .badge-sale {
-    @apply badge bg-red-100 text-red-700;
+    @apply badge bg-brand-accent text-white;
   }
 
   .badge-new {
-    @apply badge bg-brand-100 text-brand-700;
+    @apply badge bg-brand-primary text-white;
   }
 
   .badge-sold-out {
-    @apply badge bg-neutral-100 text-neutral-500;
+    @apply badge bg-neutral-100 text-neutral-400;
   }
 
   /* --- Divider --- */
   .divider {
-    @apply border-t border-neutral-100 my-4;
+    @apply border-t border-brand-primary/5 my-8;
   }
 
-  /* --- Accessible Focus Ring (used on interactive elements) --- */
+  /* --- Accessible Focus Ring --- */
   .focus-ring {
-    @apply focus:outline-none focus-visible:ring-2
-           focus-visible:ring-brand-500 focus-visible:ring-offset-2;
+    @apply focus:outline-none focus-visible:ring-1
+           focus-visible:ring-brand-accent focus-visible:ring-offset-2;
   }
 }
 

@@ -19,6 +19,7 @@ declare module '@shopify/remix-oxygen' {
     session: AppSession;
     storefront: ReturnType<typeof createHydrogenContext>['storefront'];
     cart: ReturnType<typeof createHydrogenContext>['cart'];
+    waitUntil: (promise: Promise<unknown>) => void;
     env: {
       SESSION_SECRET: string;
       PUBLIC_STOREFRONT_API_TOKEN: string;
@@ -28,6 +29,16 @@ declare module '@shopify/remix-oxygen' {
       PUBLIC_CHECKOUT_DOMAIN: string;
       PUBLIC_CUSTOMER_ACCOUNT_API_CLIENT_ID: string;
       PUBLIC_CUSTOMER_ACCOUNT_API_URL: string;
+      PUBLIC_RAZORPAY_KEY_ID?: string;
+      RAZORPAY_KEY_ID?: string;
+      RAZORPAY_KEY_SECRET?: string;
+      SENDGRID_API_KEY?: string;
+      ORDER_FROM_EMAIL?: string;
+      TWILIO_ACCOUNT_SID?: string;
+      TWILIO_AUTH_TOKEN?: string;
+      TWILIO_FROM_PHONE?: string;
+      RUFLOW_ORDER_WEBHOOK_URL?: string;
+      REVIEWS_WEBHOOK_URL?: string;
     };
   }
 }
@@ -70,6 +81,7 @@ export default {
         cart,
         storefront,
         session,
+        waitUntil: executionContext.waitUntil.bind(executionContext),
       })
     });
 

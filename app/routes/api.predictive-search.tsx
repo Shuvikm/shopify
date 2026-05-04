@@ -12,6 +12,8 @@ import {
   PREDICTIVE_SEARCH_QUERY,
   type PredictiveSearchResult,
 } from '~/graphql/PredictiveSearchQuery';
+import {dedupeProducts} from '~/lib/products';
+import {withTimeout} from '~/lib/async.server';
 
 export async function loader({request, context}: LoaderFunctionArgs) {
   const {storefront} = context;
@@ -25,18 +27,28 @@ export async function loader({request, context}: LoaderFunctionArgs) {
     });
   }
 
-  const {predictiveSearch} = await storefront.query(PREDICTIVE_SEARCH_QUERY, {
-    variables: {
-      query,
-      limit,
-      limitScope: 'EACH',
-      types: ['PRODUCT', 'COLLECTION'],
-      country: storefront.i18n.country,
-      language: storefront.i18n.language,
-    },
-  });
+  try {
+    const {predictiveSearch} = await withTimeout(storefront.query(PREDICTIVE_SEARCH_QUERY, {
+      cache: storefront.CacheShort(),
+      variables: {
+        query,
+        limit,
+        limitScope: 'EACH',
+        types: ['PRODUCT', 'COLLECTION'],
+        country: storefront.i18n.country,
+        language: storefront.i18n.language,
+      },
+    }), 5000, 'predictive search');
 
-  return json<{result: PredictiveSearchResult}>({
-    result: predictiveSearch ?? {products: [], collections: [], pages: [], articles: []},
-  });
+    return json<{result: PredictiveSearchResult}>({
+      result: predictiveSearch
+        ? {...predictiveSearch, products: dedupeProducts(predictiveSearch.products ?? []) as any}
+        : {products: [], collections: [], pages: [], articles: []},
+    });
+  } catch (error) {
+    console.error('Predictive search error:', error);
+    return json<{result: PredictiveSearchResult}>({
+      result: {products: [], collections: [], pages: [], articles: []},
+    });
+  }
 }

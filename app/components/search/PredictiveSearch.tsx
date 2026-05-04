@@ -23,7 +23,6 @@ export function PredictiveSearch({onClose}: PredictiveSearchProps) {
   const {query, setQuery, results, isLoading, clear} = usePredictiveSearch();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus input when overlay opens
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
@@ -43,144 +42,118 @@ export function PredictiveSearch({onClose}: PredictiveSearchProps) {
 
   return (
     <Transition show as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={handleClose}>
-        {/* Backdrop */}
+      <Dialog as="div" className="relative z-[200]" onClose={handleClose}>
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-150"
+          enter="ease-out duration-700"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="ease-in duration-100"
+          leave="ease-in duration-500"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+          <div className="fixed inset-0 bg-white/95 backdrop-blur-xl" aria-hidden="true" />
         </Transition.Child>
 
-        {/* Search Panel */}
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-200"
-          enterFrom="opacity-0 -translate-y-4"
-          enterTo="opacity-100 translate-y-0"
-          leave="ease-in duration-100"
-          leaveFrom="opacity-100 translate-y-0"
-          leaveTo="opacity-0 -translate-y-2"
+          enter="transform transition ease-out duration-700"
+          enterFrom="-translate-y-8 opacity-0"
+          enterTo="translate-y-0 opacity-100"
+          leave="transform transition ease-in duration-500"
+          leaveFrom="translate-y-0 opacity-100"
+          leaveTo="-translate-y-4 opacity-0"
         >
-          <div className="fixed inset-x-0 top-0 z-10">
-            <Dialog.Panel className="bg-white shadow-2xl max-w-2xl mx-auto mt-4 rounded-2xl overflow-hidden">
-              {/* Search Input */}
-              <form onSubmit={handleSubmit} role="search" aria-label="Search products">
-                <div className="flex items-center gap-3 px-5 py-4 border-b border-neutral-100">
-                  <SearchIcon />
-                  <input
-                    ref={inputRef}
-                    id="predictive-search-input"
-                    type="search"
-                    name="q"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search products, collections…"
-                    autoComplete="off"
-                    className="flex-1 text-base text-neutral-900 placeholder:text-neutral-400 bg-transparent outline-none"
-                    aria-label="Search query"
-                    aria-autocomplete="list"
-                    aria-expanded={!!results}
-                    aria-controls="predictive-search-results"
-                  />
-                  {query && (
-                    <button
-                      type="button"
-                      onClick={() => {clear(); inputRef.current?.focus();}}
-                      className="text-neutral-400 hover:text-neutral-700 transition-colors"
-                      aria-label="Clear search"
-                    >
-                      <ClearIcon />
-                    </button>
-                  )}
-                  <button
-                    type="button"
+          <div className="fixed inset-0 z-10 overflow-y-auto">
+            <div className="container mx-auto px-6 py-24 max-w-4xl">
+              <Dialog.Panel>
+                <div className="flex items-center justify-between mb-12 border-b border-brand-primary/10 pb-4">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase tracking-[0.4em] text-brand-accent mb-1">Search</span>
+                    <h2 className="text-2xl font-serif text-brand-primary">The Collection</h2>
+                  </div>
+                  <button 
                     onClick={handleClose}
-                    className="text-neutral-400 hover:text-neutral-700 transition-colors text-sm font-medium"
-                    aria-label="Close search"
+                    className="p-2 hover:text-brand-accent transition-colors"
                   >
-                    Esc
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path d="M6 18L18 6M6 6l12 12" strokeWidth="1.5" />
+                    </svg>
                   </button>
                 </div>
-              </form>
 
-              {/* Results */}
-              <div
-                id="predictive-search-results"
-                role="listbox"
-                aria-label="Search results"
-                className="max-h-[60vh] overflow-y-auto scrollbar-thin"
-              >
-                {isLoading && (
-                  <div className="flex items-center justify-center py-10 text-neutral-400 gap-2 text-sm">
-                    <LoadingSpinner />
-                    Searching…
-                  </div>
-                )}
-                {!isLoading && results && (
-                  <SearchResults
-                    results={results}
-                    query={query}
-                    onItemClick={handleClose}
+                <form onSubmit={handleSubmit} className="relative mb-16">
+                  <input
+                    ref={inputRef}
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search by product, material, or color…"
+                    className="w-full bg-transparent border-none text-3xl md:text-5xl font-serif text-brand-primary placeholder:text-neutral-200 outline-none p-0"
+                    aria-label="Search"
                   />
-                )}
-                {!isLoading && !results && !query && (
-                  <div className="px-6 py-10 space-y-8">
-                    <div className="space-y-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">Popular Searches</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {['Snowboards', 'Bindings', 'Boots', 'Accessories'].map(term => (
-                          <button 
-                            key={term}
-                            onClick={() => setQuery(term)}
-                            className="px-4 py-2 bg-neutral-50 rounded-full text-sm font-bold text-neutral-700 hover:bg-brand-50 hover:text-brand-600 transition-colors"
-                          >
-                            {term}
-                          </button>
-                        ))}
-                      </div>
+                  {isLoading && (
+                    <div className="absolute right-0 bottom-2">
+                      <div className="w-6 h-6 border-2 border-brand-accent border-t-transparent rounded-full animate-spin" />
                     </div>
-                    <div className="space-y-4">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-neutral-400">Featured Collections</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <button onClick={() => {navigate('/collections/frontpage'); handleClose();}} className="group text-left p-4 bg-neutral-50 rounded-xl hover:bg-neutral-900 transition-all duration-300">
-                          <p className="text-sm font-bold group-hover:text-white">New Arrivals</p>
-                          <p className="text-[10px] text-neutral-400 group-hover:text-neutral-500 mt-1">Explore the latest gear</p>
-                        </button>
-                        <button onClick={() => {navigate('/collections/all'); handleClose();}} className="group text-left p-4 bg-neutral-50 rounded-xl hover:bg-neutral-900 transition-all duration-300">
-                          <p className="text-sm font-bold group-hover:text-white">Winter Collection</p>
-                          <p className="text-[10px] text-neutral-400 group-hover:text-neutral-500 mt-1">Essential winter tools</p>
-                        </button>
+                  )}
+                </form>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-24">
+                  {!results && !query && (
+                    <>
+                      <div className="space-y-8">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-400">Trending Now</h3>
+                        <div className="flex flex-col gap-4">
+                          {['Minimalist Apparel', 'Handcrafted Silk', 'Bespoke Accessories', 'The Gold Edition'].map(term => (
+                            <button 
+                              key={term}
+                              onClick={() => setQuery(term)}
+                              className="text-left text-lg font-serif text-brand-primary hover:text-brand-accent transition-colors"
+                            >
+                              {term}
+                            </button>
+                          ))}
+                        </div>
                       </div>
+                      <div className="space-y-8">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-neutral-400">Featured Archive</h3>
+                        <div className="grid grid-cols-1 gap-6">
+                          {['Apparel', 'Accessories'].map(col => (
+                            <Link 
+                              key={col}
+                              to={`/collections/${col.toLowerCase()}`}
+                              onClick={handleClose}
+                              className="group flex items-center justify-between py-4 border-b border-brand-primary/5 hover:border-brand-accent transition-all"
+                            >
+                              <span className="text-xl font-serif text-brand-primary group-hover:text-brand-accent">{col}</span>
+                              <span className="text-xs tracking-widest text-neutral-300 group-hover:translate-x-2 transition-transform">Explore →</span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {results && query && (
+                    <div className="col-span-full">
+                      <SearchResults
+                        results={results}
+                        query={query}
+                        onItemClick={handleClose}
+                      />
                     </div>
+                  )}
+                </div>
+
+                {!isLoading && query && results && results.products.length === 0 && (
+                  <div className="py-24 text-center">
+                    <p className="text-xl font-serif text-neutral-400 italic">"No matching selections found in our current archive."</p>
+                    <button onClick={clear} className="mt-8 text-[10px] uppercase tracking-[0.3em] text-brand-accent hover:text-brand-primary">Reset Search</button>
                   </div>
                 )}
-                {!isLoading && query && results &&
-                  results.products.length === 0 &&
-                  results.collections.length === 0 && (
-                  <div className="px-5 py-12 text-center space-y-3">
-                    <div className="text-4xl">🔍</div>
-                    <p className="text-sm text-neutral-500 font-medium">
-                      No results found for <span className="text-neutral-900 font-bold">"{query}"</span>
-                    </p>
-                    <button onClick={clear} className="text-xs text-brand-600 font-black uppercase tracking-widest hover:underline">Clear Search</button>
-                  </div>
-                )}
-                {query && results && (results.products.length > 0 || results.collections.length > 0) && (
-                  <button 
-                    onClick={handleSubmit}
-                    className="w-full py-4 bg-neutral-50 text-[10px] font-black uppercase tracking-[0.2em] text-neutral-500 hover:bg-brand-500 hover:text-white transition-all border-t border-neutral-100"
-                  >
-                    View all results for "{query}"
-                  </button>
-                )}
-              </div>
-            </Dialog.Panel>
+              </Dialog.Panel>
+            </div>
           </div>
         </Transition.Child>
       </Dialog>

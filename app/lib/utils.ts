@@ -23,26 +23,27 @@ export function cn(...inputs: ClassValue[]): string {
  * @example formatMoney({ amount: '29.99', currencyCode: 'USD' }) → '$29.99'
  */
 export function formatMoney(money: {
-  amount: string;
-  currencyCode: string;
-}): string {
+  amount?: string | number | null;
+  currencyCode?: string | null;
+} | null | undefined): string {
+  const amount = Number.parseFloat(String(money?.amount ?? '0'));
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: money.currencyCode,
+    currency: money?.currencyCode ?? 'INR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(parseFloat(money.amount));
+  }).format(Number.isFinite(amount) ? amount : 0);
 }
 
 /**
  * Returns true if the compared-at price is strictly higher than the current price.
  */
 export function isOnSale(
-  price: {amount: string; currencyCode: string},
-  compareAtPrice: {amount: string; currencyCode: string} | null | undefined,
+  price: {amount?: string | number | null; currencyCode?: string | null} | null | undefined,
+  compareAtPrice: {amount?: string | number | null; currencyCode?: string | null} | null | undefined,
 ): boolean {
   if (!compareAtPrice) return false;
-  return parseFloat(compareAtPrice.amount) > parseFloat(price.amount);
+  return Number.parseFloat(String(compareAtPrice.amount ?? '0')) > Number.parseFloat(String(price?.amount ?? '0'));
 }
 
 // ─── URL Helpers ──────────────────────────────────────────────────────────────

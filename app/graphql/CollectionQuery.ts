@@ -69,6 +69,48 @@ export const COLLECTION_QUERY = `#graphql
   ${PRODUCT_CARD_FRAGMENT}
 ` as const;
 
+export const PRODUCTS_QUERY = `#graphql
+  query Products(
+    $query: String
+    $country: CountryCode
+    $language: LanguageCode
+    $sortKey: ProductSortKeys
+    $reverse: Boolean
+    $first: Int
+    $endCursor: String
+  ) @inContext(country: $country, language: $language) {
+    products(
+      first: $first
+      after: $endCursor
+      query: $query
+      sortKey: $sortKey
+      reverse: $reverse
+    ) {
+      filters {
+        id
+        label
+        type
+        values {
+          id
+          label
+          count
+          input
+        }
+      }
+      nodes {
+        ...ProductCard
+      }
+      pageInfo {
+        hasPreviousPage
+        hasNextPage
+        endCursor
+        startCursor
+      }
+    }
+  }
+  ${PRODUCT_CARD_FRAGMENT}
+` as const;
+
 // ─── TypeScript Types ─────────────────────────────────────────────────────────
 
 export interface PageInfo {

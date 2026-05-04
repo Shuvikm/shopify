@@ -30,7 +30,7 @@ export const CART_QUERY_FRAGMENT = `#graphql
       email
       phone
     }
-    lines(first: 100) {
+    lines(first: $numCartLines) {
       nodes {
         id
         quantity

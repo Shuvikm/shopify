@@ -9,6 +9,8 @@ import {type MetaFunction} from '@remix-run/react';
 import {type LoaderFunctionArgs, json} from '@remix-run/server-runtime';
 import {NODES_QUERY} from '~/graphql/ProductQuery';
 import {ProductCard} from '~/components/product/ProductCard';
+import {dedupeProducts} from '~/lib/products';
+import {withTimeout} from '~/lib/async.server';
 
 export const meta: MetaFunction = () => [
   {title: 'My Wishlist — HydroStore'},
@@ -21,15 +23,21 @@ export async function loader({request, context}: LoaderFunctionArgs) {
 
   if (!ids.length) return json({products: []});
 
-  const {nodes} = await context.storefront.query(NODES_QUERY, {
-    variables: {
-      ids,
-      language: context.storefront.i18n.language,
-      country: context.storefront.i18n.country,
-    },
-  });
+  try {
+    const {nodes} = await withTimeout(context.storefront.query(NODES_QUERY, {
+      cache: context.storefront.CacheShort(),
+      variables: {
+        ids,
+        language: context.storefront.i18n.language,
+        country: context.storefront.i18n.country,
+      },
+    }), 7000, 'wishlist products');
 
-  return json({products: nodes || []});
+    return json({products: dedupeProducts(nodes || [])});
+  } catch (error) {
+    console.error('Wishlist loader error:', error);
+    return json({products: []});
+  }
 }
 
 export default function WishlistPage() {
