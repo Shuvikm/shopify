@@ -1,7 +1,6 @@
 /**
  * @file config/categories.ts
- * @description Centralized category definitions with images and descriptions.
- * Used by FeaturedCategories, Header navigation, and collection filtering.
+ * @description Premium fashion & lifestyle categories with Unsplash imagery.
  */
 
 export interface Category {
@@ -12,179 +11,312 @@ export interface Category {
   emoji: string;
   description: string;
   color: string;
+  department: string;
 }
 
-function emojiSvg(emoji: string): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f1f5f9"/><stop offset="100%" stop-color="#cbd5e1"/></linearGradient></defs><rect width="600" height="600" fill="url(#bg)"/><circle cx="300" cy="300" r="220" fill="#ffffff" fill-opacity="0.9"/><text x="300" y="360" text-anchor="middle" font-size="250">${emoji}</text></svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-}
+const U = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=400&h=400&fit=crop&auto=format&q=80`;
 
 export const CATEGORIES: Category[] = [
-  // ── Fashion & Accessories ──────────────────────────────────────────────────
+  // ── Women's Fashion ─────────────────────────────────────────────────────────
   {
-    id: 'luxury-watches',
-    title: 'Luxury Watches',
-    handle: 'luxury-watches',
-    image: '/category_luxury_watches_1777624154800.png',
+    id: 'womens-dresses',
+    title: 'Dresses',
+    handle: 'dresses',
+    image: U('1515886657613-9f3515b0c78f'),
+    emoji: '👗',
+    description: 'Elegant silhouettes for every occasion',
+    color: 'bg-rose-50',
+    department: "Women's Fashion",
+  },
+  {
+    id: 'womens-tops',
+    title: 'Tops & Blouses',
+    handle: 'tops',
+    image: U('1544441893-675173e2b2e4'),
+    emoji: '👚',
+    description: 'Curated tops for the modern woman',
+    color: 'bg-pink-50',
+    department: "Women's Fashion",
+  },
+  {
+    id: 'sarees',
+    title: 'Sarees',
+    handle: 'sarees',
+    image: U('1610030469983-98e550d6193c'),
+    emoji: '🥻',
+    description: 'Timeless Indian heritage in silk',
+    color: 'bg-amber-50',
+    department: "Women's Fashion",
+  },
+  {
+    id: 'kurtas-women',
+    title: 'Kurtas',
+    handle: 'kurtas-women',
+    image: U('1583391265880-6a8a40b5e375'),
+    emoji: '🥻',
+    description: 'Handcrafted ethnic elegance',
+    color: 'bg-orange-50',
+    department: "Women's Fashion",
+  },
+  {
+    id: 'lehengas',
+    title: 'Lehengas',
+    handle: 'lehengas',
+    image: U('1617627143750-d86bc21e42bb'),
+    emoji: '🪡',
+    description: 'Bridal & festive collections',
+    color: 'bg-red-50',
+    department: "Women's Fashion",
+  },
+  {
+    id: 'womens-western',
+    title: 'Western Wear',
+    handle: 'western-wear',
+    image: U('1434389677669-e08d4d19e19a'),
+    emoji: '👖',
+    description: 'Contemporary cuts and styles',
+    color: 'bg-indigo-50',
+    department: "Women's Fashion",
+  },
+
+  // ── Men's Fashion ───────────────────────────────────────────────────────────
+  {
+    id: 'mens-suits',
+    title: 'Suits',
+    handle: 'mens-suits',
+    image: U('1507003211169-0a1dd7228f2d'),
+    emoji: '🤵',
+    description: 'Bespoke tailoring for the distinguished man',
+    color: 'bg-slate-50',
+    department: "Men's Fashion",
+  },
+  {
+    id: 'mens-shirts',
+    title: 'Shirts',
+    handle: 'shirts',
+    image: U('1596755094514-f87e34085b2c'),
+    emoji: '👔',
+    description: 'Premium fabrics, impeccable fit',
+    color: 'bg-blue-50',
+    department: "Men's Fashion",
+  },
+  {
+    id: 'mens-kurtas',
+    title: 'Ethnic Wear',
+    handle: 'mens-ethnic',
+    image: U('1583391265880-6a8a40b5e375'),
+    emoji: '🧥',
+    description: 'Sherwanis, kurtas & more',
+    color: 'bg-yellow-50',
+    department: "Men's Fashion",
+  },
+  {
+    id: 'mens-casual',
+    title: 'Casual Wear',
+    handle: 'mens-casual',
+    image: U('1542291026-7eec264c27ff'),
+    emoji: '👕',
+    description: 'Relaxed luxury for everyday life',
+    color: 'bg-green-50',
+    department: "Men's Fashion",
+  },
+
+  // ── Accessories ─────────────────────────────────────────────────────────────
+  {
+    id: 'handbags',
+    title: 'Handbags',
+    handle: 'handbags',
+    image: U('1548036161-32ba7c80e79b'),
+    emoji: '👜',
+    description: 'Italian leather & artisan craft',
+    color: 'bg-neutral-50',
+    department: 'Accessories',
+  },
+  {
+    id: 'watches',
+    title: 'Watches',
+    handle: 'watches',
+    image: U('1523170335258-f87a2d362db2'),
     emoji: '⌚',
-    description: 'Premium timepieces from top brands',
-    color: 'bg-amber-100',
+    description: 'Swiss precision, timeless design',
+    color: 'bg-zinc-50',
+    department: 'Accessories',
   },
   {
     id: 'jewellery',
     title: 'Jewellery',
     handle: 'jewellery',
-    image: '/category_jewellery_1777624566155.png',
-    emoji: '💍',
-    description: 'Exquisite rings, necklaces & more',
-    color: 'bg-rose-100',
+    image: U('1515562141207-7a88fb7ce338'),
+    emoji: '💎',
+    description: 'Fine gold, silver & gemstones',
+    color: 'bg-amber-50',
+    department: 'Accessories',
   },
   {
     id: 'sunglasses',
     title: 'Sunglasses',
     handle: 'sunglasses',
-    image: '/category_sunglasses_1777624588168.png',
+    image: U('1572635196237-14b3f281503f'),
     emoji: '🕶️',
-    description: 'Eye protection with style',
-    color: 'bg-orange-100',
+    description: 'Statement frames, UV protection',
+    color: 'bg-gray-50',
+    department: 'Accessories',
   },
   {
-    id: 'bags-wallets',
-    title: 'Bags & Wallets',
-    handle: 'bags-wallets',
-    image: '/category_bags_wallets_1777624504769.png',
+    id: 'belts',
+    title: 'Belts',
+    handle: 'belts',
+    image: U('1553062407-98eeb64c6a62'),
     emoji: '👜',
-    description: 'Stylish carriers and storage',
-    color: 'bg-purple-100',
+    description: 'Full-grain leather essentials',
+    color: 'bg-stone-50',
+    department: 'Accessories',
+  },
+  {
+    id: 'scarves',
+    title: 'Scarves & Stoles',
+    handle: 'scarves',
+    image: U('1544551763-46a013bb70d5'),
+    emoji: '🧣',
+    description: 'Cashmere, silk & fine wool',
+    color: 'bg-teal-50',
+    department: 'Accessories',
   },
 
-  // ── Clothing ───────────────────────────────────────────────────────────────
+  // ── Footwear ─────────────────────────────────────────────────────────────────
   {
-    id: 'summer-dresses',
-    title: 'Summer Dresses',
-    handle: 'summer-dresses',
-    image: '/category_summer_dresses_1777624240455.png',
-    emoji: '👗',
-    description: 'Light and breathable casual wear',
-    color: 'bg-pink-100',
+    id: 'heels',
+    title: 'Heels',
+    handle: 'heels',
+    image: U('1543163521-1bf539c55dd2'),
+    emoji: '👠',
+    description: 'From stilettos to block heels',
+    color: 'bg-rose-50',
+    department: 'Footwear',
   },
   {
-    id: 'winter-coats',
-    title: 'Winter Coats',
-    handle: 'winter-coats',
-    image: '/category_winter_coats_1777624214972.png',
-    emoji: '🧥',
-    description: 'Warm and stylish outerwear',
-    color: 'bg-slate-100',
-  },
-
-  // ── Footwear ───────────────────────────────────────────────────────────────
-  {
-    id: 'running-shoes',
-    title: 'Running Shoes',
-    handle: 'running-shoes',
-    image: '/category_running_shoes_1777624191674.png',
+    id: 'sneakers',
+    title: 'Sneakers',
+    handle: 'sneakers',
+    image: U('1542291026-7eec264c27ff'),
     emoji: '👟',
-    description: 'Performance footwear for athletes',
-    color: 'bg-blue-100',
+    description: 'Luxury casual footwear',
+    color: 'bg-blue-50',
+    department: 'Footwear',
+  },
+  {
+    id: 'formal-shoes',
+    title: 'Formal Shoes',
+    handle: 'formal-shoes',
+    image: U('1449505278314-329ae76890e3'),
+    emoji: '👞',
+    description: 'Oxford, derby & loafer styles',
+    color: 'bg-stone-50',
+    department: 'Footwear',
+  },
+  {
+    id: 'sandals',
+    title: 'Sandals',
+    handle: 'sandals',
+    image: U('1603487742131-4160cf36f79a'),
+    emoji: '👡',
+    description: 'Handcrafted leather sandals',
+    color: 'bg-amber-50',
+    department: 'Footwear',
   },
 
-  // ── Sports & Fitness ───────────────────────────────────────────────────────
-  {
-    id: 'sports-fitness',
-    title: 'Sports & Fitness',
-    handle: 'sports-fitness',
-    image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=400&h=400&fit=crop&auto=format',
-    emoji: '🏋️',
-    description: 'Gear and apparel for peak performance',
-    color: 'bg-green-100',
-  },
-  {
-    id: 'sports-shorts',
-    title: 'Sports Shorts',
-    handle: 'sports-shorts',
-    image: '/category_sports_shorts_1777624481154.png',
-    emoji: '🩳',
-    description: 'Comfortable athletic wear',
-    color: 'bg-lime-100',
-  },
-
-  // ── Outdoor & Adventure ────────────────────────────────────────────────────
-  {
-    id: 'outdoor-gear',
-    title: 'Outdoor Gear',
-    handle: 'outdoor-gear',
-    image: '/category_outdoor_gear_1777624545261.png',
-    emoji: '🏕️',
-    description: 'Adventure and camping equipment',
-    color: 'bg-amber-100',
-  },
-
-  // ── Technology ─────────────────────────────────────────────────────────────
-  {
-    id: 'smart-home',
-    title: 'Smart Home',
-    handle: 'smart-home',
-    image: '/category_smart_home_1777624524697.png',
-    emoji: '🏠',
-    description: 'IoT devices for modern living',
-    color: 'bg-cyan-100',
-  },
-  {
-    id: 'premium-tech',
-    title: 'Premium Tech',
-    handle: 'premium-tech',
-    image: '/category_premium_tech_1777624267216.png',
-    emoji: '💻',
-    description: 'Latest gadgets and electronics',
-    color: 'bg-indigo-100',
-  },
-
-  // ── Beauty & Wellness ──────────────────────────────────────────────────────
+  // ── Beauty & Grooming ────────────────────────────────────────────────────────
   {
     id: 'skincare',
-    title: 'Skin Care',
+    title: 'Skincare',
     handle: 'skincare',
-    image: '/category_skincare_1777624346725.png',
-    emoji: '🧴',
-    description: 'Natural and premium skincare products',
-    color: 'bg-teal-100',
+    image: U('1556228578-8c89e6adf883'),
+    emoji: '✨',
+    description: 'Clean beauty, radiant results',
+    color: 'bg-pink-50',
+    department: 'Beauty',
   },
   {
-    id: 'perfumes',
-    title: 'Perfumes',
-    handle: 'perfumes',
-    image: 'https://images.unsplash.com/photo-1541056344071-89b57c37e91c?w=400&h=400&fit=crop&auto=format',
+    id: 'fragrances',
+    title: 'Fragrances',
+    handle: 'fragrances',
+    image: U('1541643600914-78b084683702'),
     emoji: '🌸',
-    description: 'Artisan fragrances for every mood',
-    color: 'bg-fuchsia-100',
+    description: 'Niche perfumes & luxury scents',
+    color: 'bg-purple-50',
+    department: 'Beauty',
+  },
+  {
+    id: 'haircare',
+    title: 'Hair Care',
+    handle: 'haircare',
+    image: U('1522337360788-8b13dee7a37e'),
+    emoji: '💆',
+    description: 'Salon-grade hair essentials',
+    color: 'bg-emerald-50',
+    department: 'Beauty',
   },
 
-  // ── Home & Living ──────────────────────────────────────────────────────────
+  // ── Home & Lifestyle ─────────────────────────────────────────────────────────
   {
     id: 'home-decor',
-    title: 'Home Decor',
+    title: 'Home Décor',
     handle: 'home-decor',
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop&auto=format',
+    image: U('1555041469-a586c61ea9bc'),
+    emoji: '🏡',
+    description: 'Artisan pieces for refined spaces',
+    color: 'bg-neutral-50',
+    department: 'Home',
+  },
+  {
+    id: 'candles',
+    title: 'Candles & Aroma',
+    handle: 'candles',
+    image: U('1602523961358-f9f03dd557db'),
     emoji: '🕯️',
-    description: 'Curated pieces for beautiful spaces',
-    color: 'bg-yellow-100',
+    description: 'Luxury hand-poured candles',
+    color: 'bg-amber-50',
+    department: 'Home',
+  },
+  {
+    id: 'stationery',
+    title: 'Stationery',
+    handle: 'stationery',
+    image: U('1456735190827-d1262f71b8a3'),
+    emoji: '📓',
+    description: 'Fine paper goods & writing instruments',
+    color: 'bg-sky-50',
+    department: 'Home',
+  },
+  {
+    id: 'gifting',
+    title: 'Gift Sets',
+    handle: 'gift-sets',
+    image: U('1513201099705-a9746bab22b3'),
+    emoji: '🎁',
+    description: 'Luxury gift curation for every occasion',
+    color: 'bg-rose-50',
+    department: 'Home',
+  },
+  {
+    id: 'apparel',
+    title: 'All Apparel',
+    handle: 'apparel',
+    image: U('1490481651871-ab68de25d43d'),
+    emoji: '👗',
+    description: 'The complete fashion archive',
+    color: 'bg-neutral-50',
+    department: 'Featured',
+  },
+  {
+    id: 'accessories-all',
+    title: 'All Accessories',
+    handle: 'accessories',
+    image: U('1584917865442-de89df76afd3'),
+    emoji: '✨',
+    description: 'Complete the look',
+    color: 'bg-neutral-50',
+    department: 'Featured',
   },
 ];
-
-/** Fallback emoji SVG — used by FeaturedCategories onError handler. */
-export function getCategoryFallbackSvg(emoji: string): string {
-  return emojiSvg(emoji);
-}
-
-export function getCategoriesByHandle(handle: string): Category[] {
-  return CATEGORIES.filter((cat) => cat.handle === handle);
-}
-
-export function getCategoryById(id: string): Category | undefined {
-  return CATEGORIES.find((cat) => cat.id === id);
-}
-
-export function getAllHandles(): string[] {
-  return Array.from(new Set(CATEGORIES.map((cat) => cat.handle)));
-}

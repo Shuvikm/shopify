@@ -1,16 +1,19 @@
 /**
  * @file CartDrawer.tsx
- * @description Slide-in cart drawer using Headless UI Dialog.
+ * @description Slide-in cart drawer with liked-item aware recommendations.
+ * When items are liked (hearted), a "Because you liked…" section replaces the
+ * generic "You might also like" row and seeds the recommendation API with the
+ * liked product IDs for a tighter signal.
  */
 import {Dialog, Transition} from '@headlessui/react';
 import {Link, useFetcher} from '@remix-run/react';
-import {Fragment, useEffect} from 'react';
+import {Fragment, useEffect, useMemo} from 'react';
 import {useCart} from '~/hooks/useCart';
+import {useWishlist} from '~/hooks/useWishlist';
 import {formatMoney} from '~/lib/utils';
 import {CartLineItem} from './CartLineItem';
 import {CartSummary} from './CartSummary';
 import {FreeShippingBar} from './FreeShippingBar';
-import {FALLBACK_PRODUCT_IMAGE} from '~/lib/products';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -18,117 +21,226 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
-  const cartCtx = useCart();
-  const lines = (cartCtx as any);
-  const totalQuantity = lines.totalQuantity as number | undefined;
-  const checkoutUrl = lines.checkoutUrl as string | undefined;
-  const cartLines: any[] = (lines.lines?.nodes as any[]) ?? [];
-  const cost = lines.cost as any;
-  const subtotal = cost?.subtotalAmount;
+  const cartCtx = useCart() as any;
+  const totalQuantity: number = cartCtx.totalQuantity ?? 0;
+  const checkoutUrl: string = cartCtx.checkoutUrl ?? '/cart';
+  const cartLines: any[] = cartCtx.lines?.nodes ?? [];
+  const cost = cartCtx.cost;
 
-  const fetcher = useFetcher<{products: any[]}>();
-  const firstProductId = cartLines[0]?.merchandise?.product?.id;
+  const {isWishlisted} = useWishlist();
+
+  // Separate liked vs un-liked lines so we can route recommendations correctly
+  const likedLines = useMemo(
+    () => cartLines.filter((l) => isWishlisted(l.merchandise?.product?.id)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cartLines, isWishlisted],
+  );
+
+  const hasLikedItems = likedLines.length > 0;
+
+  // Build recommendation URL — seed with liked IDs first, fall back to first cart item
+  const recParams = useMemo(() => {
+    const params = new URLSearchParams();
+    const primaryLine = likedLines[0] ?? cartLines[0];
+    if (!primaryLine) return null;
+
+    const toRawId = (gid: string) => (gid?.includes('/') ? gid.split('/').pop()! : gid);
+    params.set('productId', toRawId(primaryLine.merchandise?.product?.id ?? ''));
+
+    // Pass extra liked IDs so the algorithm can diversify
+    likedLines.slice(1).forEach((l) => {
+      params.append('likedId', toRawId(l.merchandise?.product?.id ?? ''));
+    });
+
+    if (hasLikedItems && cartLines.length > likedLines.length) {
+      // Also include first non-liked cart item as a diversity signal
+      const nonLiked = cartLines.find((l) => !isWishlisted(l.merchandise?.product?.id));
+      if (nonLiked) params.append('likedId', toRawId(nonLiked.merchandise?.product?.id ?? ''));
+    }
+
+    return params.toString();
+  }, [likedLines, cartLines, hasLikedItems, isWishlisted]);
+
+  const fetcher = useFetcher<{products: any[]; source?: string}>();
 
   useEffect(() => {
-    // Only load recommendations if the drawer is open, we have a product to base them on,
-    // and we haven't already loaded them for this specific product.
-    if (isOpen && firstProductId && fetcher.state === 'idle' && !fetcher.data) {
-      const rawId = firstProductId.split('/').pop();
-      fetcher.load(`/api/recommendations?productId=${encodeURIComponent(rawId)}`);
+    if (isOpen && recParams && fetcher.state === 'idle' && !fetcher.data) {
+      fetcher.load(`/api/recommendations?${recParams}`);
     }
-  }, [isOpen, firstProductId, fetcher.state, fetcher.data]);
+  }, [isOpen, recParams, fetcher]);
 
-  const recommendations = fetcher.data?.products ?? [];
+  // Re-fetch when liked items change so recommendations update live
+  const likedKey = likedLines.map((l) => l.id).join(',');
+  useEffect(() => {
+    if (isOpen && recParams && fetcher.state === 'idle') {
+      fetcher.load(`/api/recommendations?${recParams}`);
+    }
+    // only re-run when the set of liked items changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [likedKey]);
+
+  const recommendations: any[] = fetcher.data?.products ?? [];
+  const recLoading = fetcher.state === 'loading';
+
+  // Label for the liked item used as the primary seed
+  const likedProductName = likedLines[0]?.merchandise?.product?.title ?? null;
 
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
+        {/* Backdrop */}
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-200"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-150"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
+          enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100"
+          leave="ease-in duration-150" leaveFrom="opacity-100" leaveTo="opacity-0"
         >
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
         </Transition.Child>
 
+        {/* Panel */}
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="translate-x-full"
-          enterTo="translate-x-0"
-          leave="ease-in duration-200"
-          leaveFrom="translate-x-0"
-          leaveTo="translate-x-full"
+          enter="ease-out duration-300" enterFrom="translate-x-full" enterTo="translate-x-0"
+          leave="ease-in duration-200" leaveFrom="translate-x-0" leaveTo="translate-x-full"
         >
           <Dialog.Panel
-            className="fixed inset-y-0 right-0 flex flex-col bg-white shadow-drawer overflow-hidden"
-            style={{width: 'min(340px, 100vw)'}}
+            className="fixed inset-y-0 right-0 flex flex-col bg-white shadow-2xl overflow-hidden"
+            style={{width: 'min(400px, 100vw)'}}
           >
-            {/* Yellow Wave Background effect */}
-            <div className="absolute top-[-20%] left-[-50%] w-[300px] h-[300px] bg-[#f6c90e] rounded-full z-0 opacity-20" />
-            
-            <div className="relative z-10 flex flex-col h-full px-7">
-              <div className="app-bar py-4">
-                <img className="w-12" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/1315882/pngwave.png" alt="Logo" />
-              </div>
-              
-              <h2 className="text-2xl font-black text-[#303841] my-5">Your cart</h2>
+            {/* Decorative blob */}
+            <div className="pointer-events-none absolute -top-20 -left-20 w-64 h-64 bg-[#f6c90e] rounded-full opacity-10 blur-3xl" />
 
+            <div className="relative flex flex-col h-full">
+              {/* ── Header ────────────────────────────────────────────── */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 shrink-0">
+                <Dialog.Title className="text-lg font-black text-neutral-900 flex items-center gap-2">
+                  Your Cart
+                  {totalQuantity > 0 && (
+                    <span className="w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center">
+                      {totalQuantity}
+                    </span>
+                  )}
+                </Dialog.Title>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-100 transition-colors text-neutral-500"
+                  aria-label="Close cart"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* ── Body ──────────────────────────────────────────────── */}
               {cartLines.length === 0 ? (
-                <div className="no-content">
-                  <p className="text-sm text-[#303841]">Your cart is empty.</p>
-                </div>
+                <EmptyCart onClose={onClose} />
               ) : (
-                <div className="flex-1 flex flex-col min-h-0">
-                  <div className="flex-1 overflow-y-auto scrollbar-none pb-6">
-                    <div className="space-y-0">
+                <>
+                  <FreeShippingBar subtotal={cost?.subtotalAmount} />
+
+                  <div className="flex-1 overflow-y-auto scrollbar-thin px-6 py-2">
+                    {/* Cart lines */}
+                    <div className="divide-y divide-neutral-100">
                       {cartLines.map((line) => (
-                        <CartLineItem key={line.id} line={line} />
+                        <div key={line.id} className="py-4">
+                          <CartLineItem line={line} />
+                        </div>
                       ))}
                     </div>
 
-                    <div className="pt-8 mt-8 border-t border-neutral-100">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-4">
-                        You might also like
+                    {/* ── Liked items callout ──────────────────────────── */}
+                    {hasLikedItems && (
+                      <div className="mt-4 mb-2 px-3 py-2.5 bg-rose-50 rounded-xl flex items-center gap-2 border border-rose-100">
+                        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-rose-500 stroke-rose-500 shrink-0" strokeWidth="1.5">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                        <p className="text-[11px] font-bold text-rose-700 leading-snug">
+                          {likedLines.length === 1
+                            ? `You liked "${likedLines[0].merchandise.product.title}" — see more below`
+                            : `You liked ${likedLines.length} items — see related picks below`}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* ── Recommendations ─────────────────────────────── */}
+                    <div className="mt-5 mb-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-neutral-400 mb-3">
+                        {hasLikedItems && likedProductName
+                          ? `Because you liked "${likedProductName.split(' ').slice(0, 3).join(' ')}…"`
+                          : 'You might also like'}
                       </p>
-                      <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-none">
-                        {fetcher.state === 'loading' ? (
-                          [1, 2].map((i) => (
-                            <div key={i} className="min-w-[120px] bg-neutral-50 rounded-2xl aspect-square animate-pulse" />
-                          ))
-                        ) : recommendations.length > 0 ? (
-                          recommendations.map((product) => (
-                            <Link key={product.id} to={`/products/${product.handle}`} onClick={onClose} className="min-w-[120px] group block">
-                              <div className="aspect-square bg-neutral-100 rounded-2xl mb-2 overflow-hidden relative">
-                                <div className="absolute inset-0 bg-[#f6c90e] opacity-0 group-hover:opacity-10 transition-opacity" />
-                                {product.featuredImage && (
-                                  <img
-                                    src={product.featuredImage.url}
-                                    alt={product.title}
-                                    className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform"
-                                  />
-                                )}
+
+                      <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-none">
+                        {recLoading
+                          ? [1, 2, 3].map((i) => (
+                              <div key={i} className="shrink-0 w-[110px]">
+                                <div className="aspect-square rounded-xl bg-neutral-100 animate-pulse mb-1.5" />
+                                <div className="h-2.5 w-3/4 bg-neutral-100 rounded animate-pulse mb-1" />
+                                <div className="h-2.5 w-1/2 bg-neutral-100 rounded animate-pulse" />
                               </div>
-                              <p className="text-[10px] font-black text-[#303841] line-clamp-1 uppercase tracking-tighter">{product.title}</p>
-                            </Link>
-                          ))
-                        ) : null}
+                            ))
+                          : recommendations.length > 0
+                          ? recommendations.slice(0, 6).map((product) => {
+                              const variant = product.variants?.nodes?.[0];
+                              return (
+                                <Link
+                                  key={product.id}
+                                  to={`/products/${product.handle}`}
+                                  onClick={onClose}
+                                  className="shrink-0 w-[110px] group block"
+                                  prefetch="intent"
+                                >
+                                  {/* Image */}
+                                  <div className="aspect-square rounded-xl overflow-hidden bg-neutral-100 mb-1.5 relative">
+                                    {product.featuredImage ? (
+                                      <img
+                                        src={product.featuredImage.url}
+                                        alt={product.title}
+                                        loading="lazy"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full bg-neutral-200" />
+                                    )}
+                                    {/* Liked badge if this recommendation is also in wishlist */}
+                                    {isWishlisted(product.id) && (
+                                      <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 rounded-full flex items-center justify-center">
+                                        <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-white" strokeWidth="0">
+                                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                        </svg>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[10px] font-bold text-neutral-800 line-clamp-2 leading-tight mb-0.5">
+                                    {product.title}
+                                  </p>
+                                  {variant && (
+                                    <p className="text-[10px] font-black text-rose-500">
+                                      {formatMoney(variant.price)}
+                                    </p>
+                                  )}
+                                </Link>
+                              );
+                            })
+                          : (
+                              <p className="text-[11px] text-neutral-400 py-2">
+                                Continue shopping to see recommendations.
+                              </p>
+                            )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="py-6 border-t border-neutral-100">
-                    <CartSummary cost={cost} checkoutUrl={checkoutUrl ?? '/cart'} />
+                  {/* ── Footer / Summary ──────────────────────────────── */}
+                  <div className="shrink-0 border-t border-neutral-100 px-6 py-4">
+                    <CartSummary cost={cost} checkoutUrl={checkoutUrl} />
                   </div>
-                </div>
+                </>
               )}
             </div>
           </Dialog.Panel>
-
         </Transition.Child>
       </Dialog>
     </Transition>
@@ -138,36 +250,18 @@ export function CartDrawer({isOpen, onClose}: CartDrawerProps) {
 function EmptyCart({onClose}: {onClose: () => void}) {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-5 px-8 text-center">
-      <div className="w-20 h-20 rounded-full bg-neutral-50 flex items-center justify-center text-neutral-300">
-        <CartEmptyIcon />
+      <div className="w-20 h-20 rounded-full bg-neutral-50 flex items-center justify-center">
+        <svg className="w-10 h-10 text-neutral-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+        </svg>
       </div>
       <div>
-        <p className="text-lg font-semibold text-neutral-800 mb-1">Your cart is empty</p>
-        <p className="text-sm text-neutral-500">Looks like you haven't added anything yet.</p>
+        <p className="text-lg font-bold text-neutral-800 mb-1">Your cart is empty</p>
+        <p className="text-sm text-neutral-500">Add items you love and like them to see recommendations.</p>
       </div>
-      <Link
-        to="/collections/all"
-        onClick={onClose}
-        className="btn btn-primary btn-lg"
-      >
+      <Link to="/collections/all" onClick={onClose} className="btn btn-primary btn-lg">
         Start Shopping
       </Link>
     </div>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-    </svg>
-  );
-}
-
-function CartEmptyIcon() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" />
-    </svg>
   );
 }

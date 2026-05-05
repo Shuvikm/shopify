@@ -110,40 +110,42 @@ export function ProductForm({product}: ProductFormProps) {
         })}
       </div>
 
-      {/* Quantity + Add to Cart */}
-      <div className="space-y-6 pt-4">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center border border-brand-primary/10 h-14">
+      {/* Quantity + Add to Cart — CodePen GSAP pill style */}
+      <div className="space-y-5 pt-4">
+        {/* Quantity stepper */}
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] uppercase tracking-[0.25em] text-brand-accent w-20 shrink-0">Quantity</span>
+          <div className="flex items-center rounded-full border border-brand-primary/10 h-11 overflow-hidden bg-white shadow-sm">
             <button
               type="button"
               disabled={quantity <= 1}
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="w-12 h-full flex items-center justify-center text-brand-primary hover:bg-neutral-50 disabled:opacity-20 transition-all"
+              className="w-10 h-full flex items-center justify-center text-brand-primary hover:bg-neutral-50 disabled:opacity-30 transition-all font-bold text-lg"
             >
               −
             </button>
-            <span className="w-10 text-center text-xs font-medium text-brand-primary">
+            <span className="w-10 text-center text-sm font-black text-brand-primary select-none">
               {quantity}
             </span>
             <button
               type="button"
               disabled={quantity >= (selectedVariant?.quantityAvailable ?? 99)}
               onClick={() => setQuantity((q) => q + 1)}
-              className="w-12 h-full flex items-center justify-center text-brand-primary hover:bg-neutral-50 disabled:opacity-20 transition-all"
+              className="w-10 h-full flex items-center justify-center text-brand-primary hover:bg-neutral-50 disabled:opacity-30 transition-all font-bold text-lg"
             >
               +
             </button>
           </div>
-
-          <QuickAddButton
-            variantId={selectedVariant?.id ?? ''}
-            quantity={quantity}
-            disabled={soldOut || !selectedVariant}
-            className="flex-1 bg-brand-primary text-white h-14 text-[10px] uppercase tracking-[0.3em] hover:bg-brand-accent transition-all duration-700 shadow-xl shadow-brand-primary/5"
-          >
-            {soldOut ? 'Currently Unavailable' : 'Add to Selection'}
-          </QuickAddButton>
         </div>
+
+        {/* GSAP animated pill add-to-cart */}
+        <QuickAddButton
+          variantId={selectedVariant?.id ?? ''}
+          quantity={quantity}
+          disabled={soldOut || !selectedVariant}
+        >
+          {soldOut ? 'Currently Unavailable' : 'Add to Cart'}
+        </QuickAddButton>
       </div>
 
       <StickyAddToCart product={product} />

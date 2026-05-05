@@ -9,8 +9,8 @@
  * Cloudflare Workers type definitions.
  */
 import {createHydrogenContext} from '@shopify/hydrogen';
-import {AppSession} from '~/lib/session.server';
-import {CART_QUERY_FRAGMENT} from '~/graphql/CartMutations';
+import {AppSession} from './lib/session.server';
+import {CART_QUERY_FRAGMENT} from './graphql/CartMutations';
 
 // Extend Remix's AppLoadContext with Hydrogen-specific fields.
 // These types are declared globally by the Cloudflare Workers / Oxygen runtime.

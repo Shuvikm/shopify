@@ -44,53 +44,73 @@ export async function action({request, context}: ActionFunctionArgs) {
         const variantIds = formData.getAll('variantId');
         const quantities = formData.getAll('quantity');
 
+        if (variantIds.length === 0) {
+          return json({ok: false, error: 'No variant selected.'}, {status: 400, headers});
+        }
+
         const lines = variantIds.map((id, index) => ({
           merchandiseId: normalizeVariantId(id),
           quantity: safeQuantity(quantities[index] ?? null),
         }));
 
-        if (lines.length === 0) {
-          return json({ok: false, error: 'No variant selected.'}, {status: 400});
+        try {
+          const result = await addToCart(cart as unknown, lines);
+          syncCartIdHeader(result);
+          return json({ok: true, result}, {headers});
+        } catch (cartErr) {
+          console.error('Add to cart API error:', cartErr);
+          return json({ok: false, error: 'Failed to add to cart'}, {status: 500, headers});
         }
-
-        const result = await addToCart(cart as unknown, lines);
-        syncCartIdHeader(result);
-        return json({ok: true}, {headers});
       }
 
       case 'UPDATE_CART': {
         const lineId = String(formData.get('lineId') ?? '');
         const quantity = safeQuantity(formData.get('quantity'));
-        if (!lineId) return json({ok: false, error: 'Missing cart line ID.'}, {status: 400});
+        if (!lineId) return json({ok: false, error: 'Missing cart line ID.'}, {status: 400, headers});
 
-        const result = await updateCartLine(cart as unknown, [{id: lineId, quantity}]);
-        syncCartIdHeader(result);
-        return json({ok: true}, {headers});
+        try {
+          const result = await updateCartLine(cart as unknown, [{id: lineId, quantity}]);
+          syncCartIdHeader(result);
+          return json({ok: true}, {headers});
+        } catch (cartErr) {
+          console.error('Update cart API error:', cartErr);
+          return json({ok: false, error: 'Failed to update cart'}, {status: 500, headers});
+        }
       }
 
       case 'REMOVE_CART_LINE': {
         const lineId = String(formData.get('lineId') ?? '');
-        if (!lineId) return json({ok: false, error: 'Missing cart line ID.'}, {status: 400});
+        if (!lineId) return json({ok: false, error: 'Missing cart line ID.'}, {status: 400, headers});
 
-        const result = await removeCartLine(cart as unknown, [lineId]);
-        syncCartIdHeader(result);
-        return json({ok: true}, {headers});
+        try {
+          const result = await removeCartLine(cart as unknown, [lineId]);
+          syncCartIdHeader(result);
+          return json({ok: true}, {headers});
+        } catch (cartErr) {
+          console.error('Remove cart line API error:', cartErr);
+          return json({ok: false, error: 'Failed to remove from cart'}, {status: 500, headers});
+        }
       }
 
       case 'UPDATE_DISCOUNT': {
         const discountCode = String(formData.get('discountCode') ?? '').trim();
-        const result = await updateDiscountCode(cart as unknown, discountCode ? [discountCode] : []);
-        syncCartIdHeader(result);
-        return json({ok: true}, {headers});
+        try {
+          const result = await updateDiscountCode(cart as unknown, discountCode ? [discountCode] : []);
+          syncCartIdHeader(result);
+          return json({ok: true}, {headers});
+        } catch (cartErr) {
+          console.error('Discount code API error:', cartErr);
+          return json({ok: false, error: 'Failed to apply discount'}, {status: 500, headers});
+        }
       }
 
       default:
-        return json({ok: false, error: `Unknown cartAction: ${cartAction}`}, {status: 400});
+        return json({ok: false, error: `Unknown cartAction: ${cartAction}`}, {status: 400, headers});
     }
   } catch (error) {
     if (error instanceof Response) throw error;
     console.error('Cart action error:', error);
-    return json({ok: false, error: 'Cart could not be updated.'}, {status: 500});
+    return json({ok: false, error: 'Cart could not be updated.'}, {status: 500, headers});
   }
 }
 

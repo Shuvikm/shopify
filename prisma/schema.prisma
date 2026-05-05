@@ -4,17 +4,56 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+
 }
 
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  likes     Like[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String?
+  phone         String?  @unique
+  country       String?
+  verified      Boolean  @default(false)
+  isPremium     Boolean  @default(false)
+  likes         Like[]
+  orders        Order[]
+  profile       UserProfile?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  avatar          String?
+  bio             String?
+  preferences     String?  // JSON string for user preferences
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model OTP {
+  email         String
+  type          String   @default("login")
+  otp           String
+  verified      Boolean  @default(false)
+  attempts      Int      @default(0)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@id([email, type])
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  price       Float
+  image       String?
+  createdAt   DateTime @default(now())
 }
 
 model Like {
@@ -23,5 +62,25 @@ model Like {
   user      User     @relation(fields: [userId], references: [id])
   productId String   // Shopify Product GID
   category  String?  // To help with recommendations
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  total     Float
+  status    String   @default("pending")
+  items     OrderItem[]
+  createdAt DateTime @default(now())
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  quantity  Int
+  price     Float
   createdAt DateTime @default(now())
 }

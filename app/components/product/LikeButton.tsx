@@ -1,60 +1,63 @@
-import {useFetcher} from '@remix-run/react';
-import {useEffect, useState} from 'react';
 import {cn} from '~/lib/utils';
+import {useWishlist} from '~/hooks/useWishlist';
+
 
 interface LikeButtonProps {
   productId: string;
-  isInitialLiked?: boolean;
   className?: string;
+  showLabel?: boolean;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function LikeButton({productId, isInitialLiked = false, className}: LikeButtonProps) {
-  const fetcher = useFetcher<{liked: boolean; error?: string}>();
-  const [isLiked, setIsLiked] = useState(isInitialLiked);
+const ICON_SIZE = {sm: 'w-4 h-4', md: 'w-5 h-5', lg: 'w-6 h-6'};
 
-  useEffect(() => {
-    if (fetcher.data && fetcher.data.liked !== undefined) {
-      setIsLiked(fetcher.data.liked);
-    }
-  }, [fetcher.data]);
+export function LikeButton({productId, className, showLabel = false, size = 'md'}: LikeButtonProps) {
+  const {isWishlisted, toggle} = useWishlist();
+  const liked = isWishlisted(productId);
 
-  const toggleLike = () => {
-    const formData = new FormData();
-    formData.append('productId', productId);
-    formData.append('action', isLiked ? 'unlike' : 'like');
-    fetcher.submit(formData, {method: 'POST', action: '/api/like'});
-    // Optimistic update
-    setIsLiked(!isLiked);
-  };
 
   return (
     <button
+      type="button"
       onClick={(e) => {
         e.preventDefault();
-        toggleLike();
+        e.stopPropagation();
+        toggle(productId);
       }}
+      aria-label={liked ? 'Unlike' : 'Like'}
+      aria-pressed={liked}
       className={cn(
-        'transition-all duration-300 transform active:scale-75',
-        isLiked ? 'text-red-500' : 'text-neutral-300 hover:text-red-400',
-        className
+        'relative flex items-center gap-1 group transition-transform active:scale-90',
+        className,
       )}
     >
-      <HeartIcon filled={isLiked} />
-    </button>
-  );
-}
+      {/* Ripple on like */}
+      {liked && (
+        <span className="absolute inset-0 rounded-full animate-ping bg-rose-400/20 pointer-events-none" />
+      )}
 
-function HeartIcon({filled}: {filled: boolean}) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      fill={filled ? "currentColor" : "none"} 
-      viewBox="0 0 24 24" 
-      strokeWidth={1.5} 
-      stroke="currentColor" 
-      className="w-5 h-5"
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
-    </svg>
+      <svg
+        viewBox="0 0 24 24"
+        strokeWidth="1.8"
+        className={cn(
+          ICON_SIZE[size],
+          'transition-all duration-300',
+          liked
+            ? 'fill-rose-500 stroke-rose-500 scale-110 drop-shadow-[0_0_6px_rgba(244,63,94,0.6)]'
+            : 'fill-transparent stroke-neutral-400 group-hover:stroke-rose-400 group-hover:scale-110',
+        )}
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+
+      {showLabel && (
+        <span className={cn(
+          'text-[10px] font-bold uppercase tracking-wide transition-colors',
+          liked ? 'text-rose-500' : 'text-neutral-400 group-hover:text-rose-400',
+        )}>
+          {liked ? 'Liked' : 'Like'}
+        </span>
+      )}
+    </button>
   );
 }

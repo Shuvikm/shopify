@@ -1,132 +1,82 @@
-/**
- * @file Testimonials.tsx
- * @description Social proof section with real customer testimonials
- * CRO Impact: +15-20% conversion lift
- */
-import {Star} from 'lucide-react';
-
-interface Testimonial {
-  quote: string;
-  author: string;
-  role: string;
-  image: string;
-  rating: number;
-  product: string;
-}
-
-const TESTIMONIALS: Testimonial[] = [
+const TESTIMONIALS = [
   {
-    quote: "Best purchase I've made this year. The quality is exceptional and the service is outstanding.",
-    author: "Sarah M.",
+    quote: "Exceptional quality. The packaging alone feels premium — exactly what I expected from a luxury store.",
+    author: "Priya S.",
     role: "Verified Buyer",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&auto=format",
     rating: 5,
-    product: "Premium Starter Kit"
+    product: "Luxury Watch",
   },
   {
-    quote: "Delivered in 2 days and exactly as described. Will definitely buy again!",
-    author: "James T.",
+    quote: "Delivered in 2 days, exactly as described. The leather is gorgeous. Will definitely buy again!",
+    author: "Rahul T.",
     role: "Verified Buyer",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&auto=format",
     rating: 5,
-    product: "Pro Edition"
+    product: "Italian Leather Bag",
   },
   {
-    quote: "The customer support team went above and beyond to help. Truly premium experience.",
+    quote: "Customer support went above and beyond. The product quality matches the premium price point.",
     author: "Emily R.",
     role: "Verified Buyer",
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&auto=format",
     rating: 5,
-    product: "Deluxe Bundle"
+    product: "Cashmere Collection",
   },
 ];
 
+function StarRow({count}: {count: number}) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg key={i} className={`w-4 h-4 ${i <= count ? 'text-yellow-400' : 'text-neutral-200'}`} viewBox="0 0 20 20" fill="currentColor">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 export function Testimonials() {
   return (
-    <section className="py-16 bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="max-w-6xl mx-auto px-4">
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <p className="text-blue-600 font-semibold mb-2">TRUSTED BY THOUSANDS</p>
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Customer Love
-          </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Real reviews from real customers who've transformed their experience with our products.
-          </p>
-        </div>
-
-        {/* Star Rating Summary */}
-        <div className="flex justify-center items-center gap-6 mb-12">
-          <div className="flex gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={20}
-                className="fill-yellow-400 text-yellow-400"
-              />
-            ))}
+    <section className="py-24 bg-neutral-50 border-y border-neutral-100">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-16">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-brand-accent mb-4">Social Proof</p>
+          <h2 className="text-brand-primary mb-4">Loved by Thousands</h2>
+          <div className="flex items-center justify-center gap-3">
+            <StarRow count={5} />
+            <p className="text-sm text-neutral-500 font-medium">4.9 / 5 from 2,400+ verified reviews</p>
           </div>
-          <p className="text-gray-600 font-medium">
-            <strong>4.9/5</strong> from 1,200+ verified reviews
-          </p>
         </div>
 
-        {/* Testimonial Cards Grid */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {TESTIMONIALS.map((testimonial, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-shadow duration-300"
-            >
-              {/* Stars */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(testimonial.rating)].map((_, j) => (
-                  <Star
-                    key={j}
-                    size={18}
-                    className="fill-yellow-400 text-yellow-400"
-                  />
-                ))}
-              </div>
-
-              {/* Quote */}
-              <p className="text-gray-700 mb-6 leading-relaxed italic">
-                "{testimonial.quote}"
-              </p>
-
-              {/* Author */}
-              <div className="flex items-center gap-4">
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.author}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
+        <div className="grid md:grid-cols-3 gap-8 mb-16">
+          {TESTIMONIALS.map((t) => (
+            <div key={t.author} className="bg-white rounded-2xl p-8 shadow-sm border border-neutral-100 hover:shadow-md transition-shadow duration-300">
+              <StarRow count={t.rating} />
+              <p className="text-neutral-700 mt-4 mb-6 leading-relaxed text-sm italic">"{t.quote}"</p>
+              <div className="flex items-center gap-3">
+                <img src={t.image} alt={t.author} loading="lazy" className="w-10 h-10 rounded-full object-cover" />
                 <div>
-                  <p className="font-semibold text-gray-900">{testimonial.author}</p>
-                  <p className="text-sm text-gray-500">
-                    {testimonial.role} • {testimonial.product}
-                  </p>
+                  <p className="text-sm font-bold text-neutral-900">{t.author}</p>
+                  <p className="text-xs text-neutral-400">{t.role} · {t.product}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Trust Metrics */}
-        <div className="grid grid-cols-3 gap-8 mt-16 pt-12 border-t border-gray-200">
-          <div className="text-center">
-            <p className="text-4xl font-bold text-blue-600 mb-2">50K+</p>
-            <p className="text-gray-600">Happy Customers</p>
-          </div>
-          <div className="text-center">
-            <p className="text-4xl font-bold text-blue-600 mb-2">98%</p>
-            <p className="text-gray-600">Satisfaction Rate</p>
-          </div>
-          <div className="text-center">
-            <p className="text-4xl font-bold text-blue-600 mb-2">2-Day</p>
-            <p className="text-gray-600">Free Shipping</p>
-          </div>
+        <div className="grid grid-cols-3 gap-8 border-t border-neutral-200 pt-12">
+          {[
+            {stat: '50K+', label: 'Happy Customers'},
+            {stat: '98%', label: 'Satisfaction Rate'},
+            {stat: '₹5K+', label: 'Free Shipping Threshold'},
+          ].map(({stat, label}) => (
+            <div key={label} className="text-center">
+              <p className="text-3xl font-black text-brand-primary mb-1">{stat}</p>
+              <p className="text-xs text-neutral-500 uppercase tracking-widest">{label}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>

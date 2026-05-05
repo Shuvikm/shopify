@@ -16,6 +16,11 @@ import {COLLECTION_QUERY} from '~/graphql/CollectionQuery';
 import {ProductGallery} from '~/components/product/ProductGallery';
 import {ProductForm} from '~/components/product/ProductForm';
 import {ProductCard, ProductCardSkeleton} from '~/components/product/ProductCard';
+import {ProductReviews} from '~/components/product/ProductReviews';
+import {UrgencyTimer} from '~/components/product/UrgencyTimer';
+import {StockLevel} from '~/components/product/StockLevel';
+import {DeliveryEstimate} from '~/components/product/DeliveryEstimate';
+import {RelatedProducts} from '~/components/product/RelatedProducts';
 import {dedupeImages, dedupeProducts, getProductImage} from '~/lib/products';
 import {withTimeout} from '~/lib/async.server';
 import {getProductSchema} from '~/lib/seo';
@@ -51,6 +56,7 @@ export const meta: MetaFunction<typeof loader> = ({data}) => {
     {property: 'og:description', content: product.seo?.description ?? product.description ?? ''},
     {property: 'og:image', content: product.featuredImage?.url ?? product.images?.nodes?.[0]?.url ?? ''},
     {property: 'og:type', content: 'product'},
+    {name: 'twitter:card', content: 'summary_large_image'},
   ];
 };
 
@@ -103,6 +109,7 @@ export default function ProductPage() {
     ...(selectedVariant?.image ? [selectedVariant.image] : []),
   ]);
   const productForForm = {...product, selectedVariant};
+  const quantityAvailable = selectedVariant?.quantityAvailable;
 
   return (
     <div className="bg-paper min-h-screen">
@@ -129,29 +136,43 @@ export default function ProductPage() {
 
           {/* Info */}
           <div className="lg:col-span-5">
-            <div className="sticky top-28">
-              <div className="mb-12">
+            <div className="sticky top-28 space-y-6">
+              {/* Vendor + Title */}
+              <div className="mb-8">
                 <p className="text-[10px] uppercase tracking-[0.4em] text-brand-accent mb-4">
                   {product.vendor ?? 'The Collection'}
                 </p>
-                <h1 className="text-brand-primary mb-4 leading-tight">
-                  {product.title}
-                </h1>
+                <h1 className="text-brand-primary mb-4 leading-tight">{product.title}</h1>
                 <div className="w-12 h-[1px] bg-brand-accent" />
               </div>
 
+              {/* Urgency — flash sale timer */}
+              <UrgencyTimer />
+
+              {/* Stock scarcity signal */}
+              <StockLevel quantity={quantityAvailable} />
+
+              {/* Product form: variant selector + add to cart */}
               <ProductForm product={productForForm} />
+
+              {/* Delivery estimate */}
+              <DeliveryEstimate />
             </div>
           </div>
         </div>
 
+        {/* Reviews */}
+        <div className="mt-24 pt-16 border-t border-brand-primary/5">
+          <ProductReviews productId={product.id} />
+        </div>
+
         {/* Related Selection */}
-        <div className="mt-32 pt-24 border-t border-brand-primary/5">
+        <div className="mt-24 pt-16 border-t border-brand-primary/5">
           <div className="text-center mb-16">
-             <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent mb-4">Complete the Look</p>
-             <h2 className="text-brand-primary">Related Selection</h2>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent mb-4">Complete the Look</p>
+            <h2 className="text-brand-primary">Related Selection</h2>
           </div>
-          
+
           <Suspense fallback={
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
               {Array.from({length: 4}).map((_, i) => <ProductCardSkeleton key={i} />)}
@@ -174,6 +195,13 @@ export default function ProductPage() {
             </Await>
           </Suspense>
         </div>
+
+        {/* Dynamic recommendations based on likes */}
+        <RelatedProducts
+          productId={product.id}
+          heading="Recommended for You"
+          className="mt-24 pt-16 border-t border-brand-primary/5"
+        />
       </div>
 
       <Analytics.ProductView
@@ -192,7 +220,6 @@ export default function ProductPage() {
         }}
       />
 
-      {/* JSON-LD Schema */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

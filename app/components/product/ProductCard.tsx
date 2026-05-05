@@ -1,7 +1,6 @@
 import {Link} from '@remix-run/react';
 import {formatMoney, isOnSale, cn} from '~/lib/utils';
 import {QuickAddButton} from './QuickAddButton';
-import {useWishlist} from '~/hooks/useWishlist';
 import {
   FALLBACK_PRODUCT_IMAGE,
   getFirstVariant,
@@ -47,8 +46,6 @@ function ProductImage({
 }
 
 export function ProductCard({product, loading = false}: ProductCardProps) {
-  const {toggle, isWishlisted} = useWishlist();
-
   if (loading) return <ProductCardSkeleton />;
 
   const firstVariant = getFirstVariant(product);
@@ -59,12 +56,13 @@ export function ProductCard({product, loading = false}: ProductCardProps) {
       product?.compareAtPriceRange?.minVariantPrice &&
       isOnSale(product.priceRange.minVariantPrice, product.compareAtPriceRange.minVariantPrice),
   );
-  const wishlisted = isWishlisted(product.id);
 
   return (
     <article className="group relative bg-transparent overflow-hidden" aria-label={product.title}>
       {/* Image Container */}
-      <Link to={`/products/${product.handle}`} prefetch="intent" className="block relative aspect-[3/4] overflow-hidden bg-[#F2F2F2]">
+      <div className="relative aspect-[3/4] overflow-hidden bg-[#F2F2F2]">
+        <Link to={`/products/${product.handle}`} prefetch="intent" className="block w-full h-full absolute inset-0 z-10" />
+
         <ProductImage
           src={image.url}
           alt={image.altText ?? product.title}
@@ -72,7 +70,7 @@ export function ProductCard({product, loading = false}: ProductCardProps) {
         />
 
         {/* Floating Labels */}
-        <div className="absolute top-4 left-4 flex flex-col gap-2">
+        <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
           {soldOut && (
             <span className="bg-brand-primary text-white text-[9px] uppercase tracking-widest px-2 py-1">
               Out of Stock
@@ -90,19 +88,18 @@ export function ProductCard({product, loading = false}: ProductCardProps) {
           <LikeButton productId={product.id} className="w-6 h-6" />
         </div>
 
-
-        {/* Quick Add Overlay */}
+        {/* Quick Add Overlay — GSAP pill collapses to circle on add */}
         {!soldOut && firstVariant?.id && (
-          <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
-            <QuickAddButton 
-              variantId={firstVariant.id} 
-              className="w-full bg-brand-primary text-white text-[10px] uppercase tracking-[0.2em] py-4 hover:bg-brand-accent transition-colors duration-500"
+          <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-400 translate-y-3 group-hover:translate-y-0 pointer-events-none z-20">
+            <QuickAddButton
+              variantId={firstVariant.id}
+              className="pointer-events-auto"
             >
               Quick Addition
             </QuickAddButton>
           </div>
         )}
-      </Link>
+      </div>
 
       {/* Product Info */}
       <div className="py-5 text-center px-2">

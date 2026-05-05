@@ -12,24 +12,22 @@ export const meta: MetaFunction = () => [
 ];
 
 export async function loader({context}: LoaderFunctionArgs) {
-  const {storefront, session} = context;
+  const {storefront, session, env} = context as any;
   const userId = session.get('userId');
   
   let customerName = 'Guest';
   if (userId) {
     try {
-      // const {prisma} = await import('~/lib/db.server');
-      const user = { name: 'Mock User' }; // await prisma.user.findUnique({where: {id: userId}});
-
+      const {getPrisma} = await import('~/lib/db.server');
+      const prisma = await getPrisma();
+      const user = await prisma.user.findUnique({where: {id: userId}});
       if (user) customerName = user.name || user.email;
     } catch (e) {
       console.error('Error fetching user for account:', e);
     }
   }
 
-  const shopDomain = new URL(`https://${storefront.getApiUrl()}`).hostname
-    .replace(/\/api\/.*/, '')
-    .split('/')[0];
+  const shopDomain = env?.PUBLIC_STORE_DOMAIN ?? new URL(storefront.getApiUrl()).hostname;
 
   return json({
     shopDomain,

@@ -8,7 +8,7 @@ const SLIDES = [
     description: 'Discover the art of minimalist design through our curated collection of premium accessories and lifestyle essentials.',
     cta: 'Explore Collection',
     href: '/collections/accessories',
-    img: '/hero_luxury_1.png',
+    img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1920&h=1080&fit=crop&auto=format&q=90',
     alignment: 'left',
   },
   {
@@ -17,8 +17,17 @@ const SLIDES = [
     description: 'Bespoke apparel designed for those who appreciate the finer details of modern tailoring and sustainable luxury.',
     cta: 'View Apparel',
     href: '/collections/apparel',
-    img: '/hero_luxury_2.png',
+    img: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920&h=1080&fit=crop&auto=format&q=90',
     alignment: 'right',
+  },
+  {
+    subtitle: 'Accessories Atelier',
+    headline: 'Crafted for the Connoisseur',
+    description: 'Each piece tells a story of heritage craftsmanship — from hand-stitched leather to precision-set gemstones.',
+    cta: 'Shop Accessories',
+    href: '/collections/accessories',
+    img: 'https://images.unsplash.com/photo-1523170335258-f87a2d362db2?w=1920&h=1080&fit=crop&auto=format&q=90',
+    alignment: 'left',
   },
 ];
 

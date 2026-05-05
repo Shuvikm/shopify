@@ -13,7 +13,7 @@ export async function loader({request, context}: LoaderFunctionArgs) {
   // Shopify's Storefront API provides a sitemap at the store domain.
   // We proxy it so the sitemap is served from the custom domain.
   const response = await fetch(
-    `https://${storefront.getApiUrl().replace(/\/api\/.*/, '')}/sitemap.xml`,
+    `${new URL(storefront.getApiUrl()).origin}/sitemap.xml`,
     {
       headers: {
         'Content-Type': 'application/xml',

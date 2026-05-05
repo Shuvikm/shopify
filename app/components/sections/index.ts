@@ -6,4 +6,3 @@ export {Hero} from './Hero';
 export {FeaturedCategories} from './FeaturedCategories';
 export {USPSection} from './USPSection';
 export {CTASection} from './CTASection';
-export {StatsSection} from './StatsSection';

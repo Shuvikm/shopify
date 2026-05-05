@@ -2,7 +2,7 @@
  * @file root.tsx
  * @description Root layout for the Hydrogen storefront.
  */
-import {type LinksFunction, type LoaderFunctionArgs} from '@remix-run/server-runtime';
+import {type LinksFunction, type LoaderFunctionArgs, redirect} from '@remix-run/server-runtime';
 import {json} from '@remix-run/server-runtime';
 import {
   Links,
@@ -36,18 +36,35 @@ export const links: LinksFunction = () => [
 
   {
     rel: 'preload',
-    href: '/hero_luxury_1.png',
+    href: '/hero_section_1777626485286.png',
     as: 'image',
     type: 'image/png',
-    imagesrcset: '/hero_luxury_1.png',
+    imageSrcSet: '/hero_section_1777626485286.png',
     fetchpriority: 'high',
   } as any,
   {rel: 'stylesheet', href: appStyles},
   {rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg'},
 ];
 
-export async function loader({context}: LoaderFunctionArgs) {
-  const {storefront, env, cart} = context;
+// Routes that are always accessible without logging in
+const PUBLIC_PATHS = ['/account/login', '/account/signup', '/api/', '/graphiql', '/subrequest-profiler', '/sitemap.xml', '/robots.txt'];
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
+}
+
+export async function loader({request, context}: LoaderFunctionArgs) {
+  const {storefront, env, cart, session} = context;
+  const url = new URL(request.url);
+
+  // Amazon-style: require login before accessing any page
+  const userId = session.get('userId');
+  if (!userId && !isPublicPath(url.pathname)) {
+    const loginUrl = new URL('/account/login', url.origin);
+    loginUrl.searchParams.set('redirect', url.pathname + url.search);
+    return redirect(loginUrl.toString());
+  }
+
   const selectedLocale = storefront.i18n;
 
   // Await the cart synchronously so CartProvider always receives fresh data —
@@ -97,7 +114,6 @@ export default function App() {
 
           consent={data?.consent}
         >
-          {/* Single CartProvider — data is already resolved from the loader */}
           <CartProvider
             countryCode={data?.selectedLocale?.country ?? 'IN'}
             data={(data?.cart as any) ?? undefined}

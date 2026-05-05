@@ -5,7 +5,6 @@
 export {ProductCard, ProductCardSkeleton} from './ProductCard';
 export {ProductForm} from './ProductForm';
 export {ProductGallery} from './ProductGallery';
-export {ProductSpecs} from './ProductSpecs';
 export {ProductReviews} from './ProductReviews';
 export {StockLevel} from './StockLevel';
 export {UrgencyTimer} from './UrgencyTimer';
