@@ -3,6 +3,9 @@ import {hydrogen} from '@shopify/hydrogen/vite';
 import {oxygen} from '@shopify/mini-oxygen/vite';
 import {vitePlugin as remix} from '@remix-run/dev';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig(({isSsrBuild}) => ({
   plugins: [
@@ -21,40 +24,24 @@ export default defineConfig(({isSsrBuild}) => ({
     tsconfigPaths(),
   ],
 
-  build: {
-    assetsInlineLimit: 0,
-    rollupOptions: {
-      output: {
-        manualChunks: isSsrBuild
-          ? undefined
-          : (id: string) => {
-              if (id.includes('node_modules/gsap')) return 'gsap';
-              if (id.includes('node_modules/@headlessui')) return 'headlessui';
-              if (
-                id.includes('node_modules/react/') ||
-                id.includes('node_modules/react-dom/')
-              ) {
-                return 'react-vendor';
-              }
-              if (
-                id.includes('node_modules/@shopify/hydrogen-react') ||
-                id.includes('node_modules/@shopify/hydrogen')
-              ) {
-                return 'hydrogen';
-              }
-            },
-      },
+  resolve: {
+    alias: {
+      // Manual aliases to avoid plugin-related boot errors
+      net: require.resolve('node-stdlib-browser/mock/empty.js'),
+      tls: require.resolve('node-stdlib-browser/mock/empty.js'),
+      stream: require.resolve('node-stdlib-browser/cjs/mock/stream.js'),
+      events: require.resolve('node-stdlib-browser/cjs/mock/events.js'),
+      util: require.resolve('node-stdlib-browser/cjs/mock/util.js'),
+      buffer: require.resolve('node-stdlib-browser/cjs/mock/buffer.js'),
     },
   },
 
   ssr: {
-    noExternal: ['@shopify/hydrogen', '@shopify/hydrogen-react'],
-    // pg and prisma adapters are Node-only — keep them external so Miniflare
-    // doesn't try to bundle them.
-    external: ['pg', '@prisma/adapter-pg', '@prisma/client', '@prisma/client/edge'],
-    optimizeDeps: {
-      include: ['use-sync-external-store/with-selector'],
-      exclude: ['@prisma/client', 'pg', '@prisma/adapter-pg'],
-    },
+    noExternal: true,
+  },
+
+  define: {
+    global: 'globalThis',
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
   },
 }));

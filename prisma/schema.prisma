@@ -13,7 +13,6 @@ model User {
   email         String   @unique
   password      String
   name          String?
-  phone         String?  @unique
   country       String?
   verified      Boolean  @default(false)
   isPremium     Boolean  @default(false)
@@ -28,6 +27,8 @@ model UserProfile {
   id              String   @id @default(cuid())
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone           String?
+  address         String?
   avatar          String?
   bio             String?
   preferences     String?  // JSON string for user preferences

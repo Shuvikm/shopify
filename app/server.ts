@@ -21,6 +21,7 @@ declare module '@shopify/remix-oxygen' {
     cart: ReturnType<typeof createHydrogenContext>['cart'];
     waitUntil: (promise: Promise<unknown>) => void;
     env: {
+      DATABASE_URL: string;
       SESSION_SECRET: string;
       PUBLIC_STOREFRONT_API_TOKEN: string;
       PUBLIC_STORE_DOMAIN: string;
@@ -40,6 +41,7 @@ declare module '@shopify/remix-oxygen' {
       RUFLOW_ORDER_WEBHOOK_URL?: string;
       REVIEWS_WEBHOOK_URL?: string;
     };
+    prisma: any;
   }
 }
 
@@ -73,6 +75,10 @@ export default {
     // @ts-expect-error — build-time virtual module provided by @remix-run/dev
     const remixBuild = await import('virtual:remix/server-build');
     
+    // Initialize Prisma lazily
+    const { getPrisma } = await import('./lib/db.server');
+    const prisma = await getPrisma();
+
     const handleRequest = createRequestHandler({
       build: remixBuild,
       mode: env.NODE_ENV || 'development',
@@ -81,6 +87,7 @@ export default {
         cart,
         storefront,
         session,
+        prisma,
         waitUntil: executionContext.waitUntil.bind(executionContext),
       })
     });
